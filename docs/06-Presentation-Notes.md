@@ -13,8 +13,8 @@ The hard part in one line: **the computer has to write in the right spot on a pa
 |---|---|---|
 | Idea | Note each field's position once, save it, reuse it | Let the machine "read" the page, find labels, write next to them |
 | Position comes from | Saved coordinates — exact | Detected from document content at run time — can vary |
-| Speed | Milliseconds | Seconds (OCR is heavy) |
-| When it goes wrong | Same error every time (fix once) | Random misreads on poor scans |
+| Speed | Milliseconds | Heavier — extra image analysis + recognition |
+| When it goes wrong | Same error every time (fix once) | Accuracy varies with scan quality |
 | Best when | The form layout never changes | Layouts change from doc to doc |
 
 Both are valid — for **different situations**. So the real question is: *which situation am I in?*
@@ -55,20 +55,19 @@ Based on the supplied samples and requirements, this is the interpretation I com
 ## 4. Why I Chose Coordinate Mapping
 
 - **Valid for fixed forms** — positions never change, so measuring once is enough.
-- **Accurate** — text lands exactly on the saved spot. Nothing "reads" the page, so nothing can misread.
+- **Deterministic placement** — text lands exactly on the calibrated spot (accurate assuming the calibration is correct). Nothing is read, so there's no recognition step to go wrong.
 - **Repeatable** — deterministic: identical inputs always produce identical output.
 - **Fast and cheap** — measured **~138 ms per form**, ~54 MB memory, no GPU, no internet.
 - **Easy to maintain** — a new bank = a new config file, not new code.
 
 ## 5. Why Not OCR (Here)
 
-OCR's real strength is **handling layouts that change** — which ours don't. On a fixed form it would only add:
+OCR's real strength is **handling layouts that change** — which ours don't. On a fixed form it would only add downsides:
 
-- **Recognition errors** — OCR can misread a label, especially on a smudged or skewed scan, and place the value in the wrong spot.
-- **Sensitivity to input quality** — its accuracy depends on the scan; ours doesn't, because nothing is read.
-- **Cost** — seconds per page instead of milliseconds, plus image clean-up.
+- **Accuracy dependency** — OCR accuracy depends on scan quality, preprocessing, font, and language. Coordinate mapping avoids that dependency entirely, because it doesn't perform text recognition.
+- **Higher compute cost** — OCR performs additional image analysis and text recognition, making it computationally more expensive than direct coordinate placement.
 
-OCR is solving a **harder problem than we have** — reading the page — and paying for it in error risk and compute, with no benefit for a form whose layout we already know. It isn't "worse"; it's simply built for the *other* branch of the decision tree.
+OCR is solving a **harder problem than we have** — reading the page — with no benefit for a form whose layout we already know. It isn't "worse"; it's simply built for the *other* branch of the decision tree.
 
 ## 6. How It Works — Two Systems
 
@@ -155,7 +154,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 ## 10. What Can Be Improved (Roadmap)
 
-- **OCR-assisted anchoring** — OCR finds a few labels at run time, works out the scan's shift, and the saved positions self-correct. Handles messy scans while staying config-driven.
+- **Support unknown templates via OCR-based field detection** — for the *other* branch of the decision tree (variable or unseen layouts), detect fields at run time instead of relying on a pre-made mapping. This is where OCR earns its place.
 - **Modularise the code + add tests** — split each script into smaller, single-purpose modules (e.g. a `geometry` module for the coordinate conversions, an `io` module for loading config/data, a `draw` module for the overlay) and add unit tests for the pure functions (point↔pixel round-trip, hex→RGB, validation) plus an output comparison test. Makes the code easier to extend and safer to change.
 - **Better calibration tool** — zoom, drag-to-adjust, undo.
 - **Scalable calibration GUI** — with many fields the current window gets cluttered (dots and labels overlap). Improve it with a **side panel listing all fields** (click a field in the list to select it, tick shows which are placed), on-hover highlighting, and show/hide labels — so a form with 50+ fields stays readable.
@@ -254,9 +253,8 @@ How users interact with it, end to end:
 
 Still **no LLM at run time**. Where AI could help later:
 
-- **OCR anchoring** — align shifted or skewed scans automatically.
-- **Template auto-detection** — recognise which form a PDF is and pick its mapping.
-- **Assisted calibration** — OCR *suggests* field positions and a human just confirms, shrinking the manual setup step.
+- **Template auto-detection** — recognise which form a PDF is and pick its mapping automatically.
+- **Assisted calibration** — OCR *suggests* field positions during onboarding and a human just confirms, shrinking the manual setup step.
 
 ## 14. Numbers (Measured, Not Guessed)
 
@@ -266,16 +264,18 @@ Still **no LLM at run time**. Where AI could help later:
 | Per field | ~15 ms |
 | Peak memory | ~54 MB |
 | Fields placed correctly | 9/9, right pages |
-| Repeatability | Pixel-identical output across runs |
+| Repeatability | Deterministic visual output for identical inputs |
 | Silent failures | None — validation reports every skipped/missing field |
 
-Worth mentioning: the output **file bytes** differ slightly between runs. I checked — that's just PDF save metadata (timestamp/ID), not the content. The rendered pixels are identical. Measure the thing that matters.
+These come from **`src/benchmark.py`** — reproducible on any machine (`python src/benchmark.py`). Timing scales with field count (e.g. the 59-field Term Deposit form takes ~627 ms).
+
+Note: the output **file bytes** differ slightly between runs — that's just PDF save metadata (a timestamp and document ID the format writes on save), not the placed content. The fill itself is fully deterministic: identical inputs always place the same values at the same coordinates.
 
 
 ## 15. Solution Highlights (Recap)
 
 - **Fills scanned, field-less PDFs** — no editable fields, no text layer, and **no OCR, no LLM**.
-- **Accurate by construction** — values land on exact saved coordinates; there's no "reading" step that can misread.
+- **Deterministic placement** — values land on exact saved coordinates (accurate assuming correct calibration); there's no "reading" step to go wrong.
 - **Repeatable** — deterministic output: identical inputs always produce identical output.
 - **Fast and light** — ~138 ms per form, ~54 MB memory, no GPU, no network.
 - **Config-driven** — a new bank = a new config file, **zero code changes**.

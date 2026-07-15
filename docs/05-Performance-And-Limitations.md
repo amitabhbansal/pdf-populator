@@ -4,24 +4,27 @@
 
 ## 1. Measured Performance
 
-Benchmarked on the Axis form (8-page scanned PDF, 9 calibrated fields), Apple Silicon MacBook Air, Python 3.14, 10 consecutive render passes (each pass = open PDF → place all 9 fields → save output):
+All figures below are produced by **`src/benchmark.py`**, which runs the real renderer 10 times and reports timing, peak memory, and repeatability. Reproduce them on any machine:
 
-| Metric | Value |
-|---|---|
-| Average time per full render | **138 ms** |
-| Min / max across 10 runs | 135 ms / 151 ms |
-| Time per field | ~15 ms |
-| Peak memory | ~54 MB |
-| External services / GPU / network | None |
+```
+python src/benchmark.py
+```
 
-For comparison, a single OCR pass over one page typically takes on the order of seconds — coordinate mapping skips that work entirely, which is why it is 10–100× faster and has no recognition step that could vary between runs.
+Example results (Apple Silicon MacBook Air, Python 3.14):
+
+| Template | Fields | Avg render | Per field | Peak memory |
+|---|---|---|---|---|
+| Axis (8 pages) | 9 | ~138 ms | ~15 ms | ~54 MB |
+| Term Deposit (2 pages) | 59 | ~627 ms | ~11 ms | ~58 MB |
+
+Timing scales mainly with the number of fields; the fixed open/save overhead is amortized across more fields, so per-field cost drops as fields grow. No GPU, no network, no external services. Coordinate mapping does no image analysis or text recognition — a render is just config lookup plus text drawing, far lighter than an OCR pass.
 
 ## 2. Measured Repeatability
 
-Repeatability was tested by rendering the same input 10 times and hashing the results:
+`benchmark.py` renders the same input twice and compares a **SHA-256 over the rendered pixels** of every page:
 
-- **Rendered content: 100% identical.** A SHA-256 over the raw pixels of every page was identical across all runs — the same input produces the same visual output, every time.
-- **File bytes differ slightly between runs** — this is PDF *metadata* (save timestamp and document ID that the PDF format embeds on save), not content. Worth knowing if anyone ever compares outputs with a byte-level diff: compare rendered content, not raw bytes.
+- **Rendered content is identical** across runs — the same input always produces the same visual output.
+- **Raw file bytes differ slightly** between runs — that's PDF *metadata* (a save timestamp and document ID the format writes), not content. So determinism is checked on rendered pixels, not raw file bytes.
 
 ## 3. Accuracy Expectations
 
