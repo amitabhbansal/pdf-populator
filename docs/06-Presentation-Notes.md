@@ -127,43 +127,28 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 - **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation.
 - **PyMuPDF** — I needed one library that could both render pages for calibration and write vector text back onto PDFs, so I chose PyMuPDF.
-- **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks. Battle-tested and trivial for this.
+- **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks.
 - **JSON** (config + data) — human-readable, language-independent, and diff-friendly; config is data, not code.
 
-## 8. Honest Downsides
+## 8. Limitations
 
-- **Manual setup per form** — someone clicks each field once in a small tool. But that's a **one-time cost per template** (like writing a config), and every run after that is automatic.
-- **Assumes tidy scans** — if a scan is badly shifted or skewed, fixed positions drift.
-- **If my assumption is wrong** (unknown or changing layouts, customer photos) — coordinate mapping is the wrong tool and **OCR becomes right**. My design already separates *finding the position* from *drawing the text*, so an OCR step can slot in without a rewrite.
+- **One-time setup per template** — Every new form must be calibrated once by clicking the field locations. After that, filling is fully automatic for that template.
+- **Designed for fixed templates** — The solution relies on a pre-calibrated template. It is not intended for arbitrary or frequently changing document layouts. If a template changes, it must be recalibrated.
 
-## 9. What's In, and What I Left Out (on purpose)
-
-**In:**
+## 9. What's Built
 
 - **Text fields** — value drawn at the saved spot, with font/size/colour from config.
 - **Checkboxes** — a **true/false in the data** makes a field a checkbox (`true` → a tick, `false` → blank). No new config format — the type is read from the value. The tick is drawn as lines, so it needs no special font.
 
-**Left out (known, not missed):**
+## 10. What Can Be Improved (Future scope)
 
-- **Signatures / photos** — same overlay idea, but with `insert_image`; a config addition, not a redesign.
-- **Non-Latin scripts** — the default font is Latin-only; Hindi/regional names need a Unicode font (supported via a `font_file` option).
-- **Radio groups (pick one)** — today each option is its own checkbox; a small `radio` type would enforce "only one."
-- **One-box-per-letter fields** — need per-character spacing (roadmap).
-- **Right-aligned / wrapping text** — amounts and long addresses aren't handled yet (roadmap).
-- **Text too long for a box** — no width check yet (roadmap).
-
-## 10. What Can Be Improved (Roadmap)
-
-- **Support unknown templates via OCR-based field detection** — for the *other* branch of the decision tree (variable or unseen layouts), detect fields at run time instead of relying on a pre-made mapping. This is where OCR earns its place.
-- **Modularise the code + add tests** — split each script into smaller, single-purpose modules (e.g. a `geometry` module for the coordinate conversions, an `io` module for loading config/data, a `draw` module for the overlay) and add unit tests for the pure functions (point↔pixel round-trip, hex→RGB, validation) plus an output comparison test. Makes the code easier to extend and safer to change.
-- **Better calibration tool** — zoom, drag-to-adjust, undo.
-- **Scalable calibration GUI** — with many fields the current window gets cluttered (dots and labels overlap). Improve it with a **side panel listing all fields** (click a field in the list to select it, tick shows which are placed), on-hover highlighting, and show/hide labels — so a form with 50+ fields stays readable.
-- **Live preview** — show the real value at the clicked spot while calibrating (what-you-see-is-what-you-get).
-- **Per-letter rendering** — for one-box-per-letter fields.
-- **Long-text handling** — measure width, then warn/shrink/wrap.
-- **Auto-detect the template** — recognise which form a PDF is and pick its mapping.
-- **Batch mode** — many customers against one form in a single run.
-- **Searchable output** — add an invisible text layer so the filled PDF is searchable.
+- Better calibration experience (zoom, drag, undo, field navigation)
+- Rich content support (signatures, photos, logos)
+- Unicode and multilingual fonts
+- Long-text handling and alignment
+- Per-letter rendering for boxed forms
+- Template detection and versioning
+- Modularization and automated testing
 
 ## 11. Deployment
 
