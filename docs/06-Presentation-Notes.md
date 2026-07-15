@@ -135,12 +135,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - **One-time setup per template** — Every new form must be calibrated once by clicking the field locations. After that, filling is fully automatic for that template.
 - **Designed for fixed templates** — The solution relies on a pre-calibrated template. It is not intended for arbitrary or frequently changing document layouts. If a template changes, it must be recalibrated.
 
-## 9. What's Built
-
-- **Text fields** — value drawn at the saved spot, with font/size/colour from config.
-- **Checkboxes** — a **true/false in the data** makes a field a checkbox (`true` → a tick, `false` → blank). No new config format — the type is read from the value. The tick is drawn as lines, so it needs no special font.
-
-## 10. What Can Be Improved (Future scope)
+## 9. What Can Be Improved (Future scope)
 
 - Better calibration experience (zoom, drag, undo, field navigation)
 - Rich content support (signatures, photos, logos)
@@ -150,9 +145,9 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - Template detection and versioning
 - Modularization and automated testing
 
-## 11. Deployment
+## 10. Deployment
 
-### Deployment Philosophy
+### Deployment Model
 
 The renderer is designed as a **stateless service**. It takes only three inputs — the **original PDF (template)**, the **mapping configuration**, and the **customer data** — and produces one output: the **filled PDF**.
 
@@ -160,7 +155,7 @@ Because the renderer is stateless, it is simple to deploy and easy to integrate 
 
 ### Deployment Options
 
-**1. Automation Anywhere (best fit)** — the renderer is packaged as a Python module or executable and invoked by an AA bot.
+**1. Automation Anywhere** — the renderer is packaged as a Python module or executable and invoked by an AA bot.
 
 ```
 CRM / Excel  ─▶  Automation Anywhere  ─▶  Renderer  ─▶  Filled PDF
@@ -201,7 +196,7 @@ new template PDF ─▶ render images ─▶ calibrate ─▶ mapping.json ─�
 ```
 Supporting a new form requires only a new template and mapping. The rendering engine remains unchanged.
 
-## 12. Product Architecture
+## 11. Product Architecture
 
 How users interact with it, end to end:
 
@@ -235,7 +230,7 @@ How users interact with it, end to end:
 - **New template** → triggers a one-time internal onboarding, after which it's available to every customer.
 
 
-## 13. Numbers (Measured, Not Guessed)
+## 12. Numbers (Measured, Not Guessed)
 
 | Metric | Result |
 |---|---|
