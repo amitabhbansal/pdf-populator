@@ -17,7 +17,7 @@ import os
 
 # The scanned PDF to fill, and the values to place into it.
 INPUT_PDF = "input/Term Deposit Account Opening Form English_Original.pdf"
-DATA_FILE = "input/sample_data.json"
+DATA_FILE = "input/input_data.json"
 
 # =========================================================
 # 2. Rendering knobs

@@ -20,7 +20,7 @@ pip install -r requirements.txt
 Edit **`src/settings.py`** — the single place for settings (which PDF, data file, DPI,
 text style). Output paths are derived automatically.
 
-You provide one JSON file — the **data file** (e.g. `input/sample_data.json`) with the
+You provide one JSON file — the **data file** (e.g. `input/input_data.json`) with the
 values to fill. Its keys define the fields; the calibrator uses the same keys, so
 there is no separate field list to maintain:
 

@@ -3,179 +3,188 @@
 
 ## 1. The Problem
 
-I'm given scanned PDFs: **no text layer, no form fields — the page is just a picture.** The task is to populate values into them automatically, without LLMs, with accuracy and repeatability as the stated priorities.
+I'm given scanned PDF forms. A scanned PDF is **just a picture** — no typed text, no fillable boxes. The task: put customer values into the right places automatically, without LLMs, and it must be **accurate** and **repeatable**.
 
-The core difficulty: the computer must write at the right spot on a page that gives it **no information about where anything is.**
+The hard part in one line: **the computer has to write in the right spot on a page that tells it nothing about where anything is.**
 
-## 2. The Two Ways to Solve This
+## 2. Two Ways to Solve It
 
-| | **Approach A — Coordinate Mapping** | **Approach B — OCR-based** |
+| | **A — Coordinate Mapping** | **B — OCR-based** |
 |---|---|---|
-| Idea | Measure each field's position once, store it, reuse it forever | Make the machine "read" the page, find labels like "Name", write next to them |
-| Positioning | Stored data — exact | Inferred at runtime — can vary |
+| Idea | Note each field's position once, save it, reuse it | Let the machine "read" the page, find labels, write next to them |
+| Position comes from | Saved numbers — exact | Guessed at run time — can vary |
 | Speed | Milliseconds | Seconds (OCR is heavy) |
-| Failure mode | Systematic only (fix once) | Random misreads on low-quality scans |
-| Valid when | The form layout is fixed | Layouts vary between documents |
+| When it goes wrong | Same error every time (fix once) | Random misreads on poor scans |
+| Best when | The form layout never changes | Layouts change from doc to doc |
 
-Each approach is right for a different situation — so the real question is: *which situation am I in?*
+Both are valid — for **different situations**. So the real question is: *which situation am I in?*
 
-## 3. My Key Assumption — and Why I Made It
+## 3. My Assumption — and Why
 
-**I assumed the forms are fixed templates**: a given bank's form always has the same layout — the "Name" line on the Axis form is always in the same place. New *data* changes every day; the *form* does not.
+**I assumed the forms are fixed templates** — a bank's form always looks the same. Only the *customer data* changes; the *form* doesn't.
 
-Why I assumed this:
+Why this assumption is reasonable:
 
-- **The constraints told me what matters**: "*Accuracy and repeatability are important.*" Those two properties point directly at deterministic positioning — stored coordinates that never vary — and away from runtime inference. Coordinate Mapping can only deliver that guarantee if templates are fixed, so I checked whether that assumption was reasonable.
-- **The supplied forms support it**: these are standardized, printed bank templates — exactly the kind of document whose layout stays constant across thousands of copies.
+- **The requirements point to it.** They stress *"accuracy and repeatability."* That means the position must be exact and never change between runs — which is exactly what saved coordinates give, and exactly what run-time guessing (OCR) does not. Saved coordinates only work if the form is fixed — so I checked that this holds.
+- **The given forms fit it.** They are standard printed bank forms — the same layout across thousands of copies.
 
-I state this assumption openly because the whole design stands on it — and if it doesn't hold, the right solution changes (section 8).
+I say this out loud because the whole design rests on it. If it were false, the right answer would change (see §8).
 
-## 4. A Concrete Use Case (What This Looks Like in Practice)
+## 4. A Real Example
 
-Think of an agent whose daily job is opening bank accounts — Federal Bank today, Axis Bank tomorrow. The *forms* are always the same two or three templates; the *customers* change constantly. Give the system a form + customer data (JSON), get back the filled form — automatically, correctly, every time. This is exactly the fixed-template world the assumption describes.
+An agent opens bank accounts all day — Axis today, Federal tomorrow. The **forms** are the same two or three templates; the **customers** keep changing. Feed the system a form + customer data, get back the filled form — correctly, every time.
 
-**One workflow point worth being explicit about:** the system fills the **master template** (the scanned blank form) digitally — each customer does *not* bring their own scan. One clean scan per template is calibrated once; per-customer output is generated digitally from it, then printed/submitted or archived. This is why scan variation between customers isn't a factor in the core flow.
+**Important detail:** the system fills the **blank master form** digitally. The customer does **not** bring their own scan. We scan each template **once**, calibrate it once, and generate every customer's copy from that. So "scans vary per customer" is simply not part of the flow.
 
 ## 5. Why I Chose Coordinate Mapping
 
-- **The assumption makes it valid** — positions never change, so measuring once is enough.
-- **High accuracy** — the value lands exactly where the stored coordinate says. No recognition step that could misread.
-- **Repeatability** — same input → same output, every run. I verified this: output is **pixel-identical across runs** (SHA-256 over rendered pages).
-- **Fast and cheap** — measured **~138 ms per form (~15 ms per field, ~54 MB memory)**. No GPU, no network, no external service.
-- **Simple to maintain** — adding a bank = adding a config file. Zero code changes.
+- **Valid for fixed forms** — positions never change, so measuring once is enough.
+- **Accurate** — text lands exactly on the saved spot. Nothing "reads" the page, so nothing can misread.
+- **Repeatable** — same input → same output, every time. I checked: output is **pixel-identical across runs**.
+- **Fast and cheap** — measured **~138 ms per form**, ~54 MB memory, no GPU, no internet.
+- **Easy to maintain** — a new bank = a new config file, not new code.
 
-## 6. Why Not OCR (For This Case)
+## 6. Why Not OCR (Here)
 
-OCR's one real benefit is **adapting to layout variation** — but our layouts don't vary. So OCR would only add:
+OCR's only real advantage is **handling layouts that change** — which ours don't. So OCR would just add:
 
-- **Recognition errors** — a misread label means a misplaced value (hurts accuracy).
-- **Run-to-run variability** — results depend on scan quality (hurts repeatability).
-- **Cost** — seconds of compute per page vs. milliseconds, plus preprocessing (deskew, thresholding).
+- **Misreads** — a wrong label reading puts text in the wrong place (hurts accuracy).
+- **Variation** — results depend on scan quality (hurts repeatability).
+- **Cost** — seconds per page instead of milliseconds, plus image clean-up.
 
-In short: for fixed templates, OCR adds all its costs and none of its benefits. The two things the requirements stress most — **accuracy and repeatability** — are exactly the two things OCR weakens.
+So for fixed forms, OCR brings all the cost and none of the benefit — and it weakens the two things the task cares about most.
 
 ## 7. How It Works — Two Systems
 
-The solution is built as **two independent systems connected by one file**. This separation is the core of the design: one system is a *one-time human setup*, the other is the *automated engine* that runs for every customer.
+The tool is **two systems joined by one file.** One is a **one-time setup** (a human clicks the field spots). The other is the **automatic engine** (runs for every customer, no human).
 
 ```
-SYSTEM 1 — CALIBRATION  (one-time per template, human clicks, done by a developer)
-
-   scanned PDF ──▶ pdf_to_images.py ──▶ page images (one PNG per page)
-                                             │  the person clicks each field
-                       coordinate_calibrator.py ──▶ mapping file
-                                                    (field positions, in points)
-
-                    ▼  the mapping file is the bridge between the two systems  ▼
-
-SYSTEM 2 — RENDERING  (automated, per customer, no human, runs in milliseconds)
-
-   original PDF  +  mapping file  +  customer data (JSON)
-                       ──▶ pdf_renderer.py ──▶ filled PDF
+   SYSTEM 1 — CALIBRATION  (setup, once per form, done by a developer)
+   ─────────────────────────────────────────────────────────────────
+        scanned PDF ─▶ pdf_to_images ─▶ page images ─▶ [person clicks] ─▶ mapping file
+                                                                            │
+                                     ── the mapping file is the bridge ──   │
+                                                                            ▼
+   SYSTEM 2 — RENDERING  (automatic, once per customer, milliseconds)
+   ─────────────────────────────────────────────────────────────────
+        original PDF + mapping file + customer data ─▶ pdf_renderer ─▶ filled PDF
 ```
 
-**System 1 — Calibration (setup, run once per form):**
-- `pdf_to_images.py` turns each PDF page into an image (you can't click on a PDF, only on a picture).
-- `coordinate_calibrator.py` shows those images; a person clicks where each field belongs; it saves every position into a **mapping file** — stored as PDF points, so it's resolution-independent.
-- This is human-in-the-loop and happens **once** for a given form. It is *not* part of the daily run.
+### What each part takes in and gives out
 
-**System 2 — Rendering (the automated engine, runs for every customer):**
-- `pdf_renderer.py` takes the original PDF, the mapping file, and the customer data, then **overlays** each value at its stored position and saves the filled PDF.
-- No human, no clicking, no OCR — it just looks up coordinates and draws. This is what runs thousands of times.
+```
+┌──────────────────────────────────────────────────────────┐
+│  pdf_to_images.py        (make images we can click on)    │
+│  ── IN  ─▶ scanned PDF, chosen DPI                         │
+│  ── OUT ─▶ one PNG image per page                          │
+└──────────────────────────────────────────────────────────┘
 
-**The bridge — `config/mappings/<template>.json`:** calibration *writes* it, rendering *reads* it. The two systems never talk to each other directly; they share only this one file. That clean seam is why the automated engine has zero form knowledge baked in.
+┌──────────────────────────────────────────────────────────┐
+│  coordinate_calibrator.py   (human clicks each field once)│
+│  ── IN  ─▶ the page images + the field names (data keys)  │
+│  ── OUT ─▶ mapping file: each field's position + style    │
+└──────────────────────────────────────────────────────────┘
 
-**Supporting pieces:**
+┌──────────────────────────────────────────────────────────┐
+│  pdf_renderer.py            (the automatic engine)        │
+│  ── IN  ─▶ original PDF + mapping file + customer data     │
+│  ── OUT ─▶ filled PDF                                      │
+└──────────────────────────────────────────────────────────┘
+```
 
-| Component | Belongs to | Job |
+**The bridge — `config/mappings/<template>.json`:** calibration **writes** it, the renderer **reads** it. The two systems never talk directly; they only share this file. That's why the engine has no form-specific logic inside it — all form knowledge lives in the config.
+
+**All the pieces at a glance:**
+
+| Part | System | What it does |
 |---|---|---|
-| `settings.py` | Both | Single config point (which PDF, DPI, style); derives all paths |
-| `pdf_to_images.py` | System 1 | PDF pages → images to click on |
-| `coordinate_calibrator.py` | System 1 | Click fields → mapping file (positions in points) |
-| `pdf_renderer.py` | System 2 | Original PDF + mapping + data → filled PDF |
-| `config/mappings/<template>.json` | Bridge | The learned positions for one form |
+| `settings.py` | Both | One place for all settings (which PDF, DPI, style); builds the paths |
+| `pdf_to_images.py` | 1 | PDF pages → images to click on |
+| `coordinate_calibrator.py` | 1 | Click fields → mapping file (positions in points) |
+| `pdf_renderer.py` | 2 | PDF + mapping + data → filled PDF |
+| `config/mappings/<template>.json` | Bridge | The saved field positions for one form |
 
-This is also the cleanest answer to *"isn't manual calibration against 'automatable'?"* — **System 1 is setup, System 2 is runtime.** Setup happens once; runtime is fully automated.
+This also answers *"isn't manual clicking against 'automatable'?"* → **System 1 is setup, System 2 is runtime.** You set up once; the daily run is fully automatic.
 
-## 8. Honest Downsides of My Approach
+## 8. Honest Downsides
 
-- **Manual onboarding** — each new template needs one calibration pass (a person clicks each field's position in a small UI tool). But this is a **one-time setup cost per template** — like writing a config — and the fill pipeline itself is 100% automated after that.
-- **Assumes consistent scans** — if a scan of a known form is heavily shifted, skewed, or rescaled, fixed coordinates will drift.
-- **If the use case is different from my assumption** — unknown forms, varying layouts, photos instead of clean scans — then coordinate mapping is the wrong tool, and **OCR becomes the right one**. The architecture already separates "how positions are found" from "how text is drawn", so an OCR positioning step can slot in without redesigning the rest.
+- **Manual setup per form** — someone clicks each field once in a small tool. But that's a **one-time cost per template** (like writing a config), and every run after that is automatic.
+- **Assumes tidy scans** — if a scan is badly shifted or skewed, fixed positions drift.
+- **If my assumption is wrong** (unknown or changing layouts, customer photos) — coordinate mapping is the wrong tool and **OCR becomes right**. My design already separates *finding the position* from *drawing the text*, so an OCR step can slot in without a rewrite.
 
-## 9. Scope — What's In, and What I Deliberately Left Out
+## 9. What's In, and What I Left Out (on purpose)
 
-**Supported:**
+**In:**
 
-- **Text fields** — value drawn at the calibrated position with configurable font/size/colour.
-- **Checkboxes** — a **boolean in the data file** marks a field as a checkbox (`true` → a tick is drawn, `false` → left blank). No new config format: the field's *type is inferred from its value*. The tick is drawn as vector strokes, so it needs no special font and stays crisp at any zoom.
+- **Text fields** — value drawn at the saved spot, with font/size/colour from config.
+- **Checkboxes** — a **true/false in the data** makes a field a checkbox (`true` → a tick, `false` → blank). No new config format — the type is read from the value. The tick is drawn as lines, so it needs no special font.
 
-**Deliberately out of scope (known, not overlooked):**
+**Left out (known, not missed):**
 
-- **Signatures / photos** — the same overlay mechanism extends to images (`insert_image` at a stored coordinate); it's a config-schema extension, not a redesign.
-- **Non-Latin scripts** — base Helvetica covers Latin only. Hindi/regional names need embedding a Unicode font (PyMuPDF supports it) via a `font_file` option.
-- **Radio groups (mutually exclusive options)** — today each option is its own boolean; enforcing "pick one" would be a small `radio` type.
-- **Comb fields / boxed characters** — one letter per box needs per-character spacing (roadmap).
-- **Right-aligned / multi-line values** — amounts that right-align, or addresses that wrap, aren't handled yet (roadmap).
-- **Long values overflowing boxes** — no width check yet (roadmap).
+- **Signatures / photos** — same overlay idea, but with `insert_image`; a config addition, not a redesign.
+- **Non-Latin scripts** — the default font is Latin-only; Hindi/regional names need a Unicode font (supported via a `font_file` option).
+- **Radio groups (pick one)** — today each option is its own checkbox; a small `radio` type would enforce "only one."
+- **One-box-per-letter fields** — need per-character spacing (roadmap).
+- **Right-aligned / wrapping text** — amounts and long addresses aren't handled yet (roadmap).
+- **Text too long for a box** — no width check yet (roadmap).
 
 ## 10. What Can Be Improved (Roadmap)
 
-- **OCR-assisted anchoring** — OCR finds 2–3 label positions at runtime, computes the scan's shift/scale, and the stored coordinates self-correct. Handles imperfect scans while keeping placement config-driven.
-- **Better calibration UI** — zoom for precise clicks, drag-to-adjust, undo.
-- **Live text preview** — show the actual value rendered at the clicked spot during calibration, so placement is WYSIWYG.
-- **Character-by-character rendering** — many bank forms have one box per letter; render values with per-character spacing to fit comb fields.
-- **Long text handling** — measure text width; warn, shrink, or wrap values that would overflow their box.
-- **Automatic template detection** — recognize which form a PDF is and pick its mapping automatically.
-- **Batch mode** — many customer records against one template in a single run.
-- **Searchable output** — add an invisible text layer so the filled PDF becomes searchable/archivable.
+- **OCR-assisted anchoring** — OCR finds a few labels at run time, works out the scan's shift, and the saved positions self-correct. Handles messy scans while staying config-driven.
+- **Better calibration tool** — zoom, drag-to-adjust, undo.
+- **Live preview** — show the real value at the clicked spot while calibrating (what-you-see-is-what-you-get).
+- **Per-letter rendering** — for one-box-per-letter fields.
+- **Long-text handling** — measure width, then warn/shrink/wrap.
+- **Auto-detect the template** — recognise which form a PDF is and pick its mapping.
+- **Batch mode** — many customers against one form in a single run.
+- **Searchable output** — add an invisible text layer so the filled PDF is searchable.
 
 ## 11. Deployment
 
-- **Footprint**: pure Python + PyMuPDF/OpenCV, ~54 MB peak, no GPU/network/external APIs. Runs anywhere.
-- **Shape**: headless CLI or batch job in a container. Production ships only the **renderer + config files** — the calibration tool stays with developers.
-- **Onboarding a bank in production**: calibrate once on a workstation → commit `config/mappings/<template>.json` → done. No code deployment.
-- **Safe operations**: deterministic output means runs are audit-friendly and retry-safe.
+- **Small footprint** — pure Python + PyMuPDF/OpenCV, ~54 MB, no GPU/internet.
+- **How it runs** — a headless CLI or batch job in a container. Production ships only the **renderer + config files**; the calibration tool stays with developers.
+- **Adding a bank in production** — calibrate once, commit its mapping file, done. No code deploy.
+- **Safe to operate** — identical output every run, so it's easy to audit and safe to retry.
 
-## 12. Automation / AI Integration Scope
+## 12. Automation / AI Integration
 
-- **Automation Anywhere Bot**: the renderer is a single entry point — JSON in, PDF out — directly wrappable as a Bot task/package. A bot collects customer data (from a CRM, email, spreadsheet), calls the engine, and routes the filled PDF onward.
-- **Where AI fits later (without breaking the no-LLM constraint at runtime)**: OCR for anchor alignment and template auto-detection; assisted calibration where OCR *suggests* field positions and a human just confirms — cutting manual onboarding down further.
+- **Automation Anywhere Bot** — the renderer is one entry point: JSON in, PDF out. A bot can gather the customer data (CRM, email, sheet), call the engine, and send the filled PDF onward.
+- **Where AI fits later** (still no LLM at run time) — OCR for anchor alignment and template auto-detection; or "assisted calibration," where OCR *suggests* positions and a human just confirms — shrinking the manual step.
 
-## 13. Numbers I Can Show (Measured, Not Estimated)
+## 13. Numbers (Measured, Not Guessed)
 
 | Metric | Result |
 |---|---|
 | Full render (8-page form, 9 fields) | ~138 ms average (10 runs) |
 | Per field | ~15 ms |
 | Peak memory | ~54 MB |
-| Fields filled correctly | 9/9, correct pages |
-| Repeatability | Pixel-identical output across all runs |
-| Silent failures | None possible — validation reports every skipped/missing field |
+| Fields placed correctly | 9/9, right pages |
+| Repeatability | Pixel-identical output across runs |
+| Silent failures | None — validation reports every skipped/missing field |
 
-One finding worth sharing: raw output **bytes** differ between runs — I investigated and it's PDF save metadata (timestamp/ID), not content. I verified content-identity by hashing the rendered pixels. Measure the thing that matters.
+Worth mentioning: the output **file bytes** differ slightly between runs. I checked — that's just PDF save metadata (timestamp/ID), not the content. The rendered pixels are identical. Measure the thing that matters.
 
 ## 14. Demo Flow
 
-1. Show the scanned form — try selecting text (nothing selects: it's just an image).
-2. Show `sample_data.json` → run the renderer → open the filled PDF.
-3. Change a value, rerun — new PDF in milliseconds.
-4. Break a field name on purpose → validation catches it and the summary reports it.
-5. Show the calibrator briefly — "this is the one-time setup per template."
+1. Show the scanned form — try to select text (nothing selects; it's a picture).
+2. Show `input_data.json` → run the renderer → open the filled PDF.
+3. Change a value, rerun — a new PDF in milliseconds.
+4. Break a field name on purpose → validation catches it, the summary reports it.
+5. Briefly show the calibrator — "this is the one-time setup."
 
 ---
 
 ## Appendix — Likely Questions & Short Answers
 
-1. *Why not OCR?* — Covered in §6: for fixed templates it adds cost and risk, no benefit.
-2. *Isn't manual calibration against "automatable"?* — Setup ≠ runtime. Calibration (System 1) is one-time per template; the fill engine (System 2) is fully headless (§7, §8).
-3. *What breaks your approach?* — Layout changes or heavily skewed scans → recalibrate (cheap), or move to OCR anchoring (§10).
-4. *How do you know the output is repeatable?* — Measured: pixel-identical across runs (§13).
-5. *Coordinate systems?* — Clicks are pixels (top-left origin) → stored as PDF points (bottom-left, 1/72 inch) → converted to the render library's space at the boundary. I verified the library's origin experimentally instead of assuming.
-6. *Long values / comb fields?* — Known limitation today; overflow handling and per-character rendering are on the roadmap (§10).
-7. *How do I add a new bank?* — Drop the PDF in `input/`, point `settings.py` at it, calibrate once. No code changes; a separate mapping file is created per template.
-8. *Scale?* — Stateless and CPU-bound: ~7 forms/sec/core; parallelize per document.
-9. *Testing?* — Unit tests for coordinate conversions, golden-file pixel comparison, validation tests with broken configs.
-10. *Why JSON configs?* — Human-readable, language-independent, diff-friendly; config is data, not code.
-11. *Why overlay instead of editing the scanned image?* — Overlay keeps the original intact, gives crisp vector text, and is reversible; painting pixels into the scan would be lossy and irreversible.
-12. *Why not an LLM (if it were allowed)?* — Non-deterministic, costly, unexplainable — overkill for locating boxes on a known layout. Same logic as OCR, amplified.
+1. *Why not OCR?* — For fixed forms it adds cost and risk with no benefit (§6).
+2. *Isn't manual calibration against "automatable"?* — Setup ≠ runtime. Calibration (System 1) is once per form; the engine (System 2) is fully automatic (§7).
+3. *What breaks your approach?* — Changed layouts or badly skewed scans → recalibrate, or add OCR anchoring (§10).
+4. *How do you know it's repeatable?* — Measured: pixel-identical across runs (§13).
+5. *Coordinate systems?* — Clicks are image pixels (top-left) → saved as PDF points (bottom-left, 1/72 inch) → converted to the library's space at the boundary. I checked the library's origin by experiment, not assumption.
+6. *Long values / one-box-per-letter?* — Known limitation; on the roadmap (§10).
+7. *How do I add a new bank?* — Drop the PDF in `input/`, point `settings.py` at it, calibrate once. No code changes; each form gets its own mapping file.
+8. *Scale?* — Stateless, CPU-bound: ~7 forms/sec/core; run many in parallel.
+9. *Testing?* — Unit tests for the coordinate maths, image comparison for output, validation tests with broken configs.
+10. *Why JSON?* — Readable, language-independent, diff-friendly; config is data, not code.
+11. *Why overlay, not edit the image?* — Overlay keeps the original intact, gives crisp text, and is reversible; painting into the image is lossy and permanent.
+12. *Why not an LLM (if allowed)?* — Unpredictable, costly, hard to explain — overkill for finding boxes on a known layout.
