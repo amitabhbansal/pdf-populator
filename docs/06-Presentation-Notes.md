@@ -21,22 +21,38 @@ Both are valid — for **different situations**. So the real question is: *which
 
 ## 3. Scope Assumption
 
-Based on the supplied samples and the requirement for accuracy and repeatability, I treated each form as a **fixed template** — a bank's form always looks the same. Only the *customer data* changes; the *form* doesn't.
+Before designing anything, my first decision was to clarify **which problem I was actually solving.** I saw two possible interpretations of the assignment:
 
-Why this is a sound scoping decision:
+### Scenario 1 — Fixed Templates
+The organization has a small set of known forms (for example, Axis Bank or Federal Bank). The layout never changes; only the customer data changes. The same template is filled repeatedly for different customers.
 
-- **The requirements point to it.** They stress *"accuracy and repeatability."* That means the position must be exact and never change between runs — which is exactly what saved coordinates give, and exactly what run-time detection (OCR) does not. Saved coordinates only work if the form is fixed — so I confirmed that this holds.
-- **The given forms fit it.** They are standard printed bank forms — the same layout across thousands of copies.
+### Scenario 2 — Unknown Templates
+Every incoming PDF could have a different layout, so the system must first *understand* the document before deciding where to write.
 
-I say this out loud because the whole design rests on it. If it were false, the right answer would change (see §8).
+These two scenarios lead to different solutions:
 
-## 4. A Real Example
+```
+                Scanned PDF
+                     │
+                     ▼
+      What problem am I solving?
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+ Fixed templates           Unknown templates
+        │                         │
+ Coordinate Mapping             OCR
+```
 
-An agent opens bank accounts all day — Axis today, Federal tomorrow. The **forms** are the same two or three templates; the **customers** keep changing. Feed the system a form + customer data, get back the filled form — correctly, every time.
+For this assignment I chose **Scenario 1 — fixed-template document population**, because:
 
-**Important detail:** the system fills the **blank master form** digitally. The customer does **not** bring their own scan. We scan each template **once**, calibrate it once, and generate every customer's copy from that. So "scans vary per customer" is simply not part of the flow.
+- The requirements emphasize **accuracy** and **repeatability**, which favour deterministic placement.
 
-## 5. Why I Chose Coordinate Mapping
+Based on the supplied samples and requirements, this is the interpretation I committed to. If the scope were instead unknown or changing layouts, I would have taken the OCR branch.
+
+> **Different problem scopes lead to different correct solutions. My first design decision was deciding which problem I was actually solving.**
+
+## 4. Why I Chose Coordinate Mapping
 
 - **Valid for fixed forms** — positions never change, so measuring once is enough.
 - **Accurate** — text lands exactly on the saved spot. Nothing "reads" the page, so nothing can misread.
@@ -44,17 +60,17 @@ An agent opens bank accounts all day — Axis today, Federal tomorrow. The **for
 - **Fast and cheap** — measured **~138 ms per form**, ~54 MB memory, no GPU, no internet.
 - **Easy to maintain** — a new bank = a new config file, not new code.
 
-## 6. Why Not OCR (Here)
+## 5. Why Not OCR (Here)
 
-OCR's only real advantage is **handling layouts that change** — which ours don't. So OCR would just add:
+OCR's real strength is **handling layouts that change** — which ours don't. On a fixed form it would only add:
 
-- **Misreads** — a wrong label reading puts text in the wrong place (hurts accuracy).
-- **Variation** — results depend on scan quality (hurts repeatability).
+- **Recognition errors** — OCR can misread a label, especially on a smudged or skewed scan, and place the value in the wrong spot.
+- **Sensitivity to input quality** — its accuracy depends on the scan; ours doesn't, because nothing is read.
 - **Cost** — seconds per page instead of milliseconds, plus image clean-up.
 
-So for fixed forms, OCR brings all the cost and none of the benefit — and it weakens the two things the task cares about most.
+OCR is solving a **harder problem than we have** — reading the page — and paying for it in error risk and compute, with no benefit for a form whose layout we already know. It isn't "worse"; it's simply built for the *other* branch of the decision tree.
 
-## 7. How It Works — Two Systems
+## 6. How It Works — Two Systems
 
 The tool is **two systems joined by one file.** One is a **one-time setup** (a human clicks the field spots). The other is the **automatic engine** (runs for every customer, no human).
 
@@ -108,20 +124,20 @@ The tool is **two systems joined by one file.** One is a **one-time setup** (a h
 
 This also answers *"isn't manual clicking against 'automatable'?"* → **System 1 is setup, System 2 is runtime.** You set up once; the daily run is fully automatic.
 
-## 8. Why These Technologies
+## 7. Why These Technologies
 
 - **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation.
 - **PyMuPDF** — I needed one library that could both render pages for calibration and write vector text back onto PDFs, so I chose PyMuPDF.
 - **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks. Battle-tested and trivial for this.
 - **JSON** (config + data) — human-readable, language-independent, and diff-friendly; config is data, not code.
 
-## 9. Honest Downsides
+## 8. Honest Downsides
 
 - **Manual setup per form** — someone clicks each field once in a small tool. But that's a **one-time cost per template** (like writing a config), and every run after that is automatic.
 - **Assumes tidy scans** — if a scan is badly shifted or skewed, fixed positions drift.
 - **If my assumption is wrong** (unknown or changing layouts, customer photos) — coordinate mapping is the wrong tool and **OCR becomes right**. My design already separates *finding the position* from *drawing the text*, so an OCR step can slot in without a rewrite.
 
-## 10. What's In, and What I Left Out (on purpose)
+## 9. What's In, and What I Left Out (on purpose)
 
 **In:**
 
@@ -137,7 +153,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - **Right-aligned / wrapping text** — amounts and long addresses aren't handled yet (roadmap).
 - **Text too long for a box** — no width check yet (roadmap).
 
-## 11. What Can Be Improved (Roadmap)
+## 10. What Can Be Improved (Roadmap)
 
 - **OCR-assisted anchoring** — OCR finds a few labels at run time, works out the scan's shift, and the saved positions self-correct. Handles messy scans while staying config-driven.
 - **Modularise the code + add tests** — split each script into smaller, single-purpose modules (e.g. a `geometry` module for the coordinate conversions, an `io` module for loading config/data, a `draw` module for the overlay) and add unit tests for the pure functions (point↔pixel round-trip, hex→RGB, validation) plus an output comparison test. Makes the code easier to extend and safer to change.
@@ -150,17 +166,97 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - **Batch mode** — many customers against one form in a single run.
 - **Searchable output** — add an invisible text layer so the filled PDF is searchable.
 
-## 12. Deployment
+## 11. Deployment
 
-- **Small footprint** — pure Python + PyMuPDF/OpenCV, ~54 MB, no GPU/internet.
-- **How it runs** — a headless CLI or batch job in a container. Production ships only the **renderer + config files**; the calibration tool stays with developers.
-- **Adding a bank in production** — calibrate once, commit its mapping file, done. No code deploy.
-- **Safe to operate** — identical output every run, so it's easy to audit and safe to retry.
+### Deployment Philosophy
 
-## 13. Automation / AI Integration
+The renderer is designed as a **stateless service**. It takes only three inputs — the **original PDF (template)**, the **mapping configuration**, and the **customer data** — and produces one output: the **filled PDF**.
 
-- **Automation Anywhere Bot** — the renderer is one entry point: JSON in, PDF out. A bot can gather the customer data (CRM, email, sheet), call the engine, and send the filled PDF onward.
-- **Where AI fits later** (still no LLM at run time) — OCR for anchor alignment and template auto-detection; or "assisted calibration," where OCR *suggests* positions and a human just confirms — shrinking the manual step.
+Because the renderer is stateless, it is simple to deploy and easy to integrate into different environments such as an Automation Anywhere bot, REST API, or desktop application.
+
+### Deployment Options
+
+**1. Automation Anywhere (best fit)** — the renderer is packaged as a Python module or executable and invoked by an AA bot.
+
+```
+CRM / Excel  ─▶  Automation Anywhere  ─▶  Renderer  ─▶  Filled PDF
+```
+Matches the company's domain, drops into existing RPA workflows, and needs no UI.
+
+**2. REST API** — the renderer runs as a lightweight web service.
+
+```
+POST /render
+
+{
+    "template": "axis_savings",
+    "data": { ... }
+}
+
+        ↓
+
+filled.pdf
+```
+For web portals, CRM systems, and internal applications.
+
+**3. Desktop Application** — packaged with PyInstaller: offline, no Python install, suitable for bank branches.
+
+**4. Batch Processing** — a background process monitors an input folder for new JSON files and automatically generates the corresponding PDFs.
+
+```
+input/  customer1.json, customer2.json, ...   ─▶   output/  customer1.pdf, customer2.pdf, ...
+```
+Suitable for overnight processing.
+
+### Template Onboarding
+
+Adding a new form is a one-time setup, not a code change:
+
+```
+new template PDF ─▶ render images ─▶ calibrate ─▶ mapping.json ─▶ store in library ─▶ available immediately
+```
+Supporting a new form requires only a new template and mapping. The rendering engine remains unchanged.
+
+## 12. Product Architecture
+
+How users interact with it, end to end:
+
+```
+                 Customer
+                     │
+                     ▼
+              Select Template
+                     │
+          Existing? ────── No
+             │              │
+            Yes             ▼
+             │      Internal Template
+             │         Onboarding
+             │              │
+             ▼              ▼
+        Template Library  (PDF + Mapping)
+                     │
+                     ▼
+         Rendering Engine  ◀── customer data
+                     │
+                     ▼
+                Filled PDF
+```
+
+> **The renderer never knows whether it is filling an Axis, Federal, or any other bank form. It simply receives a PDF, a mapping, and customer data. This keeps the engine generic while allowing the template library to grow independently.**
+
+- The **rendering engine is deployed once** and is stateless, so it scales horizontally.
+- A **template library** holds each form as *PDF + mapping*; the library grows over time, the code doesn't.
+- **Existing template** → the customer submits their data → filled PDF in milliseconds.
+- **New template** → triggers a one-time internal onboarding, after which it's available to every customer.
+
+## 13. AI Integration (Future)
+
+Still **no LLM at run time**. Where AI could help later:
+
+- **OCR anchoring** — align shifted or skewed scans automatically.
+- **Template auto-detection** — recognise which form a PDF is and pick its mapping.
+- **Assisted calibration** — OCR *suggests* field positions and a human just confirms, shrinking the manual setup step.
 
 ## 14. Numbers (Measured, Not Guessed)
 
