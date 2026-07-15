@@ -1,8 +1,77 @@
 {
-    "customer_name": "Amitabh Bansal",
-    "account_no": "123456789012",
     "date": "15/07/2026",
+
+    "resident": true,
+    "nre": false,
+    "nro": false,
+    "fcnr": false,
+
+    "cash_certificate": false,
+    "fixed_deposit": true,
+    "recurring_deposit": false,
+    "tax_saver_deposit": false,
+
+    "primary_applicant_name": "Amitabh Bansal",
+    "primary_account_number": "123456789012",
+    "primary_customer_id": "CUST001234",
+
+    "second_applicant_name": "Priya Bansal",
+    "second_account_number": "123456789013",
+    "second_customer_id": "CUST001235",
+
+    "third_applicant_name": "",
+    "third_account_number": "",
+    "third_customer_id": "",
+
+    "single_mode": false,
+    "either_or_survivor": true,
+    "joint": false,
+    "former_or_survivor": false,
+    "latter_or_survivor": false,
+    "minor_guardian": false,
+
+    "deposit_amount": "500000",
+    "period": "24 Months",
+    "interest_rate": "6.75%",
+    "payment_value": "520000",
+
+    "mly": false,
+    "qly": true,
+
+    "auto_renewal_instruction": "Renew for same tenure",
+    "renew_deposit_period": "24 Months",
+
+    "standing_instruction_account": "123456789012",
+
+    "purpose_of_deposit": "Personal Savings",
+    "security_release_authority": "Self",
+    "repayable_to": "Primary Applicant",
+
     "mobile": "9876543210",
-    "email": "amitabh@example.com",
-    "savings_account": true
+    "email": "amitabh.bansal@example.com",
+
+    "other_bank_account": "987654321098",
+    "other_bank_account_name": "Amitabh Bansal",
+    "ifsc": "FDRL0001234",
+    "bank_name": "Federal Bank",
+    "branch": "MG Road Branch, Bengaluru",
+
+    "branch_name": "MG Road Branch",
+    "debit_date": "15/07/2026",
+    "debit_amount": "500000",
+    "debit_amount_words": "Five Lakh Rupees Only",
+    "debit_account_number": "123456789012",
+    "deposit_holder_name": "Amitabh Bansal",
+    "term_deposit_account_number": "TD123456789",
+
+    "ack_branch": "MG Road Branch",
+    "ack_date": "15/07/2026",
+    "ack_application_number": "APP2026001",
+    "ack_customer_name": "Amitabh Bansal",
+    "ack_deposit_number": "TD123456789",
+    "ack_reference_number": "DA1-2026-001",
+    "ack_reference_date": "15/07/2026",
+    "ack_nomination_date": "15/07/2026",
+    "ack_nominee_name": "Rahul Bansal",
+    "ack_deposit_account_number": "123456789012"
 }
