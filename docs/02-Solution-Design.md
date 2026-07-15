@@ -25,7 +25,7 @@ The solution should be:
 - **Accuracy:** High (placement is exact by construction).
 - **Performance:** High (just reads config and writes text).
 - **Maintainability:** High — adding/adjusting a form is a config change, not a code change.
-- **Automation suitability:** Excellent — no interactive or non-deterministic steps.
+- **Automation suitability:** Excellent at **runtime** — the render engine is fully automated and deterministic (no interactive or random steps). The **one-time calibration** per template is interactive (a human clicks field positions), but it is setup, not part of the automated run.
 
 ### Approach 2 — OCR-Based Detection
 

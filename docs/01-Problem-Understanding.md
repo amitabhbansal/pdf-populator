@@ -29,7 +29,7 @@ Every sentence in the assignment hides a design constraint, so I'm breaking down
 | **"fully automatable"** | Must run headless — batch job, CLI, or service. | No GUI, no manual steps. |
 | **"accuracy and repeatability"** | Same input → same output, every time; values land in the right place. | Points toward **deterministic positioning**, not guessing. |
 
-The core challenge in one sentence: **I need to place text at the correct pixel location on a document where the computer has no idea where anything is, because to it the whole page is just a picture.**
+> The core challenge in one sentence: **I need to place text at the correct pixel location on a document where the computer has no idea where anything is, because to it the whole page is just a picture.**
 
 ## 4. Types of PDFs
 
@@ -46,7 +46,6 @@ PDFs fall into three categories, based on how they were created:
 1. **Text selection test** — try to select text with the mouse. Nothing highlights → no text layer.
 2. **Search test** — Ctrl+F for a word clearly visible on the page. No results → confirms Image-only.
 3. **Form field test** — check for AcroForm/XFA fields (via a PDF library, or "Highlight Existing Fields" in a viewer). None present → confirms "no editable fields."
-4. **Page metadata check** — inspect page size (points) and embedded image resolution (DPI).
 
 
 
@@ -81,20 +80,12 @@ But there are no fields — it's just an image. So, where should I write? The co
 
 This is the core difficulty the whole solution has to solve: **establishing *where* to write on a page that carries no positional information about its own content.**
 
-## 7. Why Editable PDFs Would Have Been Easier
 
-If these were **True PDFs** or forms with **AcroForm/XFA fields**, the problem would largely disappear:
-
-- With **form fields**, I could look up a field by name and set its value directly (`field["Name"] = "Amitabh"`) — the PDF viewer handles placement, sizing, and rendering.
-- With **real text objects**, I could ask the file for the coordinates of the label "Name" and write next to it, because that position is stored in the file.
-
-Both give the computer positional knowledge for free. The scanned form gives none — which is exactly what makes this assignment non-trivial.
-
-## 8. What OCR Is
+## 7. What OCR Is
 
 **OCR (Optical Character Recognition)** is the process of taking an image containing text and converting it into machine-readable characters, along with **where** each character/word was found on the image. It is one way to give the computer the positional knowledge a scanned page lacks.
 
-## 9. How OCR Works (High Level)
+## 8. How OCR Works (High Level)
 
 At a high level, an OCR engine:
 
@@ -105,12 +96,12 @@ At a high level, an OCR engine:
 
 It is pattern recognition, not "understanding" — the engine does not comprehend meaning, it guesses characters from shapes.
 
-## 10. Where OCR Is Useful
+## 9. Where OCR Is Useful
 
 - **Needed** whenever the file has no text layer at all — i.e., Image-only PDFs — because there is no other way to read the content.
 - **Not needed** for True PDFs or Searchable PDFs, where a text layer already exists and can be read directly and reliably. Running OCR there is redundant and can even introduce recognition errors where perfect data already exists.
 
-## 11. What Information OCR Returns
+## 10. What Information OCR Returns
 
 For each recognized unit (character / word / line), OCR typically returns:
 
@@ -118,17 +109,11 @@ For each recognized unit (character / word / line), OCR typically returns:
 - **Bounding box** — the `(x, y, width, height)` of that text on the image, in pixel coordinates.
 - **Confidence** — a score (e.g., 0–100) indicating how sure the engine is about the recognition, useful for filtering out unreliable reads.
 
-## 12. Assumptions
+## 11. Assumptions
 
 - The supplied forms are **fixed templates** — a given bank form always has the same layout.
 - The customer data to populate is **provided separately** (structured input), not extracted from the scan.
 - The set of fields to fill is **known in advance** for each form.
 - Scans are of **reasonable, consistent quality** (comparable size and orientation).
 
-## 13. Non-Goals
-
-- **Not** extracting or reading existing content out of the scanned form.
-- **Not** handling arbitrary or unknown form layouts.
-- **Not** choosing or comparing implementation approaches here — that is done in `02-Solution-Design.md`.
-- **Not** using any LLM at any stage.
 
