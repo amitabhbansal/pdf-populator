@@ -1,0 +1,540 @@
+{
+    "template": {
+        "name": "Term Deposit Account Opening Form English_Original",
+        "page_width": 595.8,
+        "page_height": 842.4
+    },
+    "fields": {
+        "date": {
+            "type": "text",
+            "page": 1,
+            "x": 493.2,
+            "y": 740.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "resident": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 106.8,
+            "y": 688.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "nre": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 156.0,
+            "y": 690.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "nro": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 187.8,
+            "y": 690.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "fcnr": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 220.8,
+            "y": 691.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "cash_certificate": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 93.0,
+            "y": 661.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "fixed_deposit": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 187.2,
+            "y": 661.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "recurring_deposit": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 285.0,
+            "y": 663.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "tax_saver_deposit": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 384.0,
+            "y": 660.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "primary_applicant_name": {
+            "type": "text",
+            "page": 1,
+            "x": 125.4,
+            "y": 629.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "primary_account_number": {
+            "type": "text",
+            "page": 1,
+            "x": 305.4,
+            "y": 630.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "primary_customer_id": {
+            "type": "text",
+            "page": 1,
+            "x": 473.4,
+            "y": 627.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "second_applicant_name": {
+            "type": "text",
+            "page": 1,
+            "x": 124.8,
+            "y": 615.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "second_account_number": {
+            "type": "text",
+            "page": 1,
+            "x": 305.4,
+            "y": 616.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "second_customer_id": {
+            "type": "text",
+            "page": 1,
+            "x": 474.6,
+            "y": 616.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "third_applicant_name": {
+            "type": "text",
+            "page": 1,
+            "x": 126.0,
+            "y": 604.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "third_account_number": {
+            "type": "text",
+            "page": 1,
+            "x": 305.4,
+            "y": 604.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "third_customer_id": {
+            "type": "text",
+            "page": 1,
+            "x": 475.2,
+            "y": 605.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "single_mode": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 95.4,
+            "y": 585.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "either_or_survivor": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 148.8,
+            "y": 583.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "joint": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 204.6,
+            "y": 583.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "former_or_survivor": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 254.4,
+            "y": 585.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "latter_or_survivor": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 322.2,
+            "y": 584.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "minor_guardian": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 418.2,
+            "y": 585.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "deposit_amount": {
+            "type": "text",
+            "page": 1,
+            "x": 36.0,
+            "y": 527.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "period": {
+            "type": "text",
+            "page": 1,
+            "x": 136.2,
+            "y": 525.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "interest_rate": {
+            "type": "text",
+            "page": 1,
+            "x": 210.6,
+            "y": 525.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "payment_value": {
+            "type": "text",
+            "page": 1,
+            "x": 483.0,
+            "y": 562.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "mly": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 433.2,
+            "y": 539.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "qly": {
+            "type": "checkbox",
+            "page": 1,
+            "x": 477.0,
+            "y": 538.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "auto_renewal_instruction": {
+            "type": "text",
+            "page": 1,
+            "x": 212.4,
+            "y": 490.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "renew_deposit_period": {
+            "type": "text",
+            "page": 1,
+            "x": 470.4,
+            "y": 493.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "standing_instruction_account": {
+            "type": "text",
+            "page": 1,
+            "x": 194.4,
+            "y": 443.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "purpose_of_deposit": {
+            "type": "text",
+            "page": 1,
+            "x": 132.0,
+            "y": 403.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "security_release_authority": {
+            "type": "text",
+            "page": 1,
+            "x": 207.6,
+            "y": 388.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "repayable_to": {
+            "type": "text",
+            "page": 1,
+            "x": 236.4,
+            "y": 376.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "mobile": {
+            "type": "text",
+            "page": 1,
+            "x": 430.2,
+            "y": 447.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "other_bank_account": {
+            "type": "text",
+            "page": 1,
+            "x": 428.4,
+            "y": 435.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "other_bank_account_name": {
+            "type": "text",
+            "page": 1,
+            "x": 426.0,
+            "y": 421.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ifsc": {
+            "type": "text",
+            "page": 1,
+            "x": 430.2,
+            "y": 410.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "bank_name": {
+            "type": "text",
+            "page": 1,
+            "x": 429.6,
+            "y": 396.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "branch": {
+            "type": "text",
+            "page": 1,
+            "x": 429.0,
+            "y": 381.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "branch_name": {
+            "type": "text",
+            "page": 1,
+            "x": 84.6,
+            "y": 148.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "debit_date": {
+            "type": "text",
+            "page": 1,
+            "x": 474.6,
+            "y": 148.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "debit_amount": {
+            "type": "text",
+            "page": 1,
+            "x": 216.6,
+            "y": 129.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "debit_amount_words": {
+            "type": "text",
+            "page": 1,
+            "x": 375.6,
+            "y": 129.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "debit_account_number": {
+            "type": "text",
+            "page": 1,
+            "x": 357.6,
+            "y": 114.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "deposit_holder_name": {
+            "type": "text",
+            "page": 1,
+            "x": 177.6,
+            "y": 95.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "term_deposit_account_number": {
+            "type": "text",
+            "page": 1,
+            "x": 142.2,
+            "y": 81.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_branch": {
+            "type": "text",
+            "page": 2,
+            "x": 446.4,
+            "y": 170.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_date": {
+            "type": "text",
+            "page": 2,
+            "x": 437.4,
+            "y": 157.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_application_number": {
+            "type": "text",
+            "page": 2,
+            "x": 456.6,
+            "y": 147.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_customer_name": {
+            "type": "text",
+            "page": 2,
+            "x": 69.6,
+            "y": 126.0,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_deposit_number": {
+            "type": "text",
+            "page": 2,
+            "x": 191.4,
+            "y": 100.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_reference_number": {
+            "type": "text",
+            "page": 2,
+            "x": 181.8,
+            "y": 88.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_reference_date": {
+            "type": "text",
+            "page": 2,
+            "x": 386.4,
+            "y": 88.8,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_nomination_date": {
+            "type": "text",
+            "page": 2,
+            "x": 234.6,
+            "y": 77.4,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_nominee_name": {
+            "type": "text",
+            "page": 2,
+            "x": 379.8,
+            "y": 78.6,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        },
+        "ack_deposit_account_number": {
+            "type": "text",
+            "page": 2,
+            "x": 243.6,
+            "y": 67.2,
+            "font": "Helvetica",
+            "size": 11,
+            "color": "#000000"
+        }
+    }
+}
