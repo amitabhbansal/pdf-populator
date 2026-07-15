@@ -106,13 +106,20 @@ The tool is **two systems joined by one file.** One is a **one-time setup** (a h
 
 This also answers *"isn't manual clicking against 'automatable'?"* → **System 1 is setup, System 2 is runtime.** You set up once; the daily run is fully automatic.
 
-## 8. Honest Downsides
+## 8. Why These Technologies
+
+- **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation, so language speed is a non-issue.
+- **PyMuPDF** — one library covers everything I need: open the scanned PDF, read page sizes, render pages to images (for calibration), and draw text/lines at exact coordinates, then save. Fast, with a simple API. *(It's AGPL-licensed — fine for this; a commercial product would need a commercial licence or an alternative.)*
+- **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks. Battle-tested and trivial for this.
+- **JSON** (config + data) — human-readable, language-independent, and diff-friendly; config is data, not code.
+
+## 9. Honest Downsides
 
 - **Manual setup per form** — someone clicks each field once in a small tool. But that's a **one-time cost per template** (like writing a config), and every run after that is automatic.
 - **Assumes tidy scans** — if a scan is badly shifted or skewed, fixed positions drift.
 - **If my assumption is wrong** (unknown or changing layouts, customer photos) — coordinate mapping is the wrong tool and **OCR becomes right**. My design already separates *finding the position* from *drawing the text*, so an OCR step can slot in without a rewrite.
 
-## 9. What's In, and What I Left Out (on purpose)
+## 10. What's In, and What I Left Out (on purpose)
 
 **In:**
 
@@ -128,7 +135,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - **Right-aligned / wrapping text** — amounts and long addresses aren't handled yet (roadmap).
 - **Text too long for a box** — no width check yet (roadmap).
 
-## 10. What Can Be Improved (Roadmap)
+## 11. What Can Be Improved (Roadmap)
 
 - **OCR-assisted anchoring** — OCR finds a few labels at run time, works out the scan's shift, and the saved positions self-correct. Handles messy scans while staying config-driven.
 - **Better calibration tool** — zoom, drag-to-adjust, undo.
@@ -139,19 +146,19 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - **Batch mode** — many customers against one form in a single run.
 - **Searchable output** — add an invisible text layer so the filled PDF is searchable.
 
-## 11. Deployment
+## 12. Deployment
 
 - **Small footprint** — pure Python + PyMuPDF/OpenCV, ~54 MB, no GPU/internet.
 - **How it runs** — a headless CLI or batch job in a container. Production ships only the **renderer + config files**; the calibration tool stays with developers.
 - **Adding a bank in production** — calibrate once, commit its mapping file, done. No code deploy.
 - **Safe to operate** — identical output every run, so it's easy to audit and safe to retry.
 
-## 12. Automation / AI Integration
+## 13. Automation / AI Integration
 
 - **Automation Anywhere Bot** — the renderer is one entry point: JSON in, PDF out. A bot can gather the customer data (CRM, email, sheet), call the engine, and send the filled PDF onward.
 - **Where AI fits later** (still no LLM at run time) — OCR for anchor alignment and template auto-detection; or "assisted calibration," where OCR *suggests* positions and a human just confirms — shrinking the manual step.
 
-## 13. Numbers (Measured, Not Guessed)
+## 14. Numbers (Measured, Not Guessed)
 
 | Metric | Result |
 |---|---|
@@ -164,27 +171,15 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 Worth mentioning: the output **file bytes** differ slightly between runs. I checked — that's just PDF save metadata (timestamp/ID), not the content. The rendered pixels are identical. Measure the thing that matters.
 
-## 14. Demo Flow
 
-1. Show the scanned form — try to select text (nothing selects; it's a picture).
-2. Show `input_data.json` → run the renderer → open the filled PDF.
-3. Change a value, rerun — a new PDF in milliseconds.
-4. Break a field name on purpose → validation catches it, the summary reports it.
-5. Briefly show the calibrator — "this is the one-time setup."
+## 15. Solution Highlights (Recap)
 
----
+- **Fills scanned, field-less PDFs** — no editable fields, no text layer, and **no OCR, no LLM**.
+- **Accurate by construction** — values land on exact saved coordinates; there's no "reading" step that can misread.
+- **Repeatable** — same input → **pixel-identical output every run** (verified, not claimed).
+- **Fast and light** — ~138 ms per form, ~54 MB memory, no GPU, no network.
+- **Config-driven** — a new bank = a new config file, **zero code changes**.
+- **Two clean systems** — one-time human calibration, then a fully automated fill engine.
+- **Fails loudly, never silently** — validation + a filled/skipped summary on every run.
+- **Original scan untouched** — values are drawn on top (overlay); supports text **and** checkboxes.
 
-## Appendix — Likely Questions & Short Answers
-
-1. *Why not OCR?* — For fixed forms it adds cost and risk with no benefit (§6).
-2. *Isn't manual calibration against "automatable"?* — Setup ≠ runtime. Calibration (System 1) is once per form; the engine (System 2) is fully automatic (§7).
-3. *What breaks your approach?* — Changed layouts or badly skewed scans → recalibrate, or add OCR anchoring (§10).
-4. *How do you know it's repeatable?* — Measured: pixel-identical across runs (§13).
-5. *Coordinate systems?* — Clicks are image pixels (top-left) → saved as PDF points (bottom-left, 1/72 inch) → converted to the library's space at the boundary. I checked the library's origin by experiment, not assumption.
-6. *Long values / one-box-per-letter?* — Known limitation; on the roadmap (§10).
-7. *How do I add a new bank?* — Drop the PDF in `input/`, point `settings.py` at it, calibrate once. No code changes; each form gets its own mapping file.
-8. *Scale?* — Stateless, CPU-bound: ~7 forms/sec/core; run many in parallel.
-9. *Testing?* — Unit tests for the coordinate maths, image comparison for output, validation tests with broken configs.
-10. *Why JSON?* — Readable, language-independent, diff-friendly; config is data, not code.
-11. *Why overlay, not edit the image?* — Overlay keeps the original intact, gives crisp text, and is reversible; painting into the image is lossy and permanent.
-12. *Why not an LLM (if allowed)?* — Unpredictable, costly, hard to explain — overkill for finding boxes on a known layout.

@@ -52,6 +52,6 @@
 
 ## Decision 9 — Why Pre-Render Validation + Run Summary?
 
-- **Decision:** Before rendering, cross-check `fields.json` ↔ mapping ↔ data and report every mismatch; end each run with an explicit filled/skipped summary.
+- **Decision:** Before rendering, cross-check the mapping ↔ data and report every mismatch; end each run with an explicit filled/skipped summary.
 - **Why:** The worst failure mode isn't a crash — it's a plausible-looking but silently incomplete PDF. Warnings don't block (partial fills can be intentional); an empty mapping is a hard error.
 - **Rejected alternative:** Fail-fast on any mismatch (too rigid for legitimate partial fills) or the previous behaviour (silent skips).
