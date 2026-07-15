@@ -249,14 +249,8 @@ How users interact with it, end to end:
 - **Existing template** → the customer submits their data → filled PDF in milliseconds.
 - **New template** → triggers a one-time internal onboarding, after which it's available to every customer.
 
-## 13. AI Integration (Future)
 
-Still **no LLM at run time**. Where AI could help later:
-
-- **Template auto-detection** — recognise which form a PDF is and pick its mapping automatically.
-- **Assisted calibration** — OCR *suggests* field positions during onboarding and a human just confirms, shrinking the manual setup step.
-
-## 14. Numbers (Measured, Not Guessed)
+## 13. Numbers (Measured, Not Guessed)
 
 | Metric | Result |
 |---|---|
@@ -270,16 +264,4 @@ Still **no LLM at run time**. Where AI could help later:
 These come from **`src/benchmark.py`** — reproducible on any machine (`python src/benchmark.py`). Timing scales with field count (e.g. the 59-field Term Deposit form takes ~627 ms).
 
 Note: the output **file bytes** differ slightly between runs — that's just PDF save metadata (a timestamp and document ID the format writes on save), not the placed content. The fill itself is fully deterministic: identical inputs always place the same values at the same coordinates.
-
-
-## 15. Solution Highlights (Recap)
-
-- **Fills scanned, field-less PDFs** — no editable fields, no text layer, and **no OCR, no LLM**.
-- **Deterministic placement** — values land on exact saved coordinates (accurate assuming correct calibration); there's no "reading" step to go wrong.
-- **Repeatable** — deterministic output: identical inputs always produce identical output.
-- **Fast and light** — ~138 ms per form, ~54 MB memory, no GPU, no network.
-- **Config-driven** — a new bank = a new config file, **zero code changes**.
-- **Two clean systems** — one-time human calibration, then a fully automated fill engine.
-- **Fails loudly, never silently** — validation + a filled/skipped summary on every run.
-- **Original scan untouched** — values are drawn on top (overlay); supports text **and** checkboxes.
 
