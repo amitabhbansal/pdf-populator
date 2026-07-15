@@ -132,6 +132,28 @@ def render(pdf_path, mapping, data, output_path):
             size = spec.get("size", 11)
             color = hex_to_rgb(spec.get("color", "#000000"))
 
+            if spec.get("type") == "checkbox":
+                # Boolean field: draw a tick when true, nothing when false.
+                if value is not True:
+                    logger.info("Checkbox '%s' is unchecked; leaving blank.", field_name)
+                    filled += 1
+                    continue
+                # Draw the tick as two vector strokes centred on the calibrated point
+                # (the user clicks the centre of the box). Vector = no font glyph needed,
+                # crisp at any zoom. Geometry is scaled by `size`.
+                cx = x
+                cy = page.rect.height - y            # centre, in top-left space
+                s = size
+                stroke = max(1.0, s * 0.12)
+                p_left = (cx - 0.30 * s, cy - 0.02 * s)
+                p_bottom = (cx - 0.08 * s, cy + 0.22 * s)
+                p_right = (cx + 0.34 * s, cy - 0.30 * s)
+                page.draw_line(p_left, p_bottom, color=color, width=stroke)
+                page.draw_line(p_bottom, p_right, color=color, width=stroke)
+                filled += 1
+                logger.info("Checked '%s' on page %s.", field_name, spec.get("page", 1))
+                continue
+
             # mapping.json stores bottom-left PDF points; insert_text uses a top-left
             # origin (verified experimentally), so flip y at this boundary. The extra
             # nudge lowers the baseline so the clicked point acts as the text's top-left.

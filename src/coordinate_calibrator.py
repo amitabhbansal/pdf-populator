@@ -22,9 +22,13 @@ DEFAULT_COLOR = settings.DEFAULT_COLOR
 # Field names come from the DATA FILE's keys — the user writes that file anyway for
 # rendering, so there is no separate field list to author. The page for each field is
 # captured from whichever page is on screen when the user clicks ([ / ] to navigate).
+# A boolean value marks the field as a CHECKBOX: click the centre of its box.
 try:
     with open(DATA_PATH) as f:
-        FIELDS = list(json.load(f).keys())
+        _data = json.load(f)
+    FIELDS = list(_data.keys())
+    FIELD_TYPES = {k: ("checkbox" if isinstance(v, bool) else "text")
+                   for k, v in _data.items()}
 except (OSError, json.JSONDecodeError) as e:
     print(f"Could not load field names from {DATA_PATH}: {e}")
     exit()
@@ -204,8 +208,9 @@ while True:
             cv2.circle(window, (a["x"], a["y"]), 9, (0, 165, 255), 2)
 
         status = "SET" if active_name in mapping else "not set"
-        draw_text_bg(window, f"Field {current_index + 1}/{len(FIELDS)} : {active_name} [{status}]",
-                     (10, 58), 0.6, (0, 255, 255), 2)
+        kind = FIELD_TYPES.get(active_name, "text")
+        label = f"Field {current_index + 1}/{len(FIELDS)} : {active_name} ({kind}) [{status}]"
+        draw_text_bg(window, label, (10, 58), 0.6, (0, 255, 255), 2)
 
     cv2.imshow("Coordinate Calibrator", window)
 
@@ -255,6 +260,7 @@ while True:
             page_h = page_height_of.get(info["page"], first["height_pt"])
             x_pt, y_pt = to_points(info["x"], info["y"], page_h)
             output["fields"][name] = {
+                "type": FIELD_TYPES.get(name, "text"),
                 "page": info["page"],
                 "x": x_pt,
                 "y": y_pt,

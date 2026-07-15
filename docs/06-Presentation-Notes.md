@@ -60,14 +60,20 @@ In short: for fixed templates, OCR adds all its costs and none of its benefits. 
 - **Assumes consistent scans** — if a scan of a known form is heavily shifted, skewed, or rescaled, fixed coordinates will drift.
 - **If the use case is different from my assumption** — unknown forms, varying layouts, photos instead of clean scans — then coordinate mapping is the wrong tool, and **OCR (or a hybrid) becomes the right one**. The architecture already separates "how positions are found" from "how text is drawn", so an OCR positioning step can slot in without redesigning the rest.
 
-## 8. Scope — What I Deliberately Left Out (and Know About)
+## 8. Scope — What's In, and What I Deliberately Left Out
 
-I kept the prototype focused on the core problem: placing text values accurately. These are out of scope **by choice, not by oversight**:
+**Supported:**
 
-- **Checkboxes, signatures, photos** — real bank forms need tick marks, a signature image, a passport photo. The same overlay mechanism extends to images (`insert_image` at a stored coordinate); it's an extension of the config schema, not a redesign.
-- **Non-Latin scripts** — the built-in Helvetica font covers Latin text only. Hindi/regional names need embedding a Unicode font (PyMuPDF supports this); a config-level `font_file` option is the fix.
+- **Text fields** — value drawn at the calibrated position with configurable font/size/colour.
+- **Checkboxes** — a **boolean in the data file** marks a field as a checkbox (`true` → a tick is drawn, `false` → left blank). No new config format: the field's *type is inferred from its value*. The tick is drawn as vector strokes, so it needs no special font and stays crisp at any zoom.
+
+**Deliberately out of scope (known, not overlooked):**
+
+- **Signatures / photos** — the same overlay mechanism extends to images (`insert_image` at a stored coordinate); it's a config-schema extension, not a redesign.
+- **Non-Latin scripts** — base Helvetica covers Latin only. Hindi/regional names need embedding a Unicode font (PyMuPDF supports it) via a `font_file` option.
+- **Radio groups (mutually exclusive options)** — today each option is its own boolean; enforcing "pick one" would be a small `radio` type.
 - **Comb fields / boxed characters** — one letter per box needs per-character spacing (roadmap).
-- **Multiple versions of the same form** — if a bank revises its layout, that's a new template config (and automatic template detection is the long-term answer).
+- **Right-aligned / multi-line values** — amounts that right-align, or addresses that wrap, aren't handled yet (roadmap).
 - **Long values overflowing boxes** — no width check yet (roadmap).
 
 ## 9. What Can Be Improved (Roadmap)

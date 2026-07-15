@@ -4,8 +4,5 @@
     "date": "15/07/2026",
     "mobile": "9876543210",
     "email": "amitabh@example.com",
-    "pan": "ABCDE1234F",
-    "address": "42, MG Road, Sector 5",
-    "state": "Karnataka",
-    "city": "Bengaluru"
+    "savings_account": true
 }
