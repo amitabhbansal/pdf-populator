@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Generated output (page images + filled PDFs) — keep the folder, ignore contents
+output/*
+!output/.gitkeep
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
