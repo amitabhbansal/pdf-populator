@@ -60,4 +60,4 @@ Calibration is a developer-side, one-time step — production runs only need the
 
 ## Future Architecture Extensions (High Level)
 
-The rendering step is intentionally decoupled from *how positions are determined*. That leaves room to later swap or augment the fixed-coordinate source with an **OCR-based** or **hybrid** positioning step for variable or lower-quality scans — without redesigning the rest of the pipeline. (Captured as future work in `05-Performance-And-Limitations.md`.)
+The rendering step is intentionally decoupled from *how positions are determined*. That leaves room to later swap or augment the fixed-coordinate source with an **OCR-based** positioning step for variable or lower-quality scans — without redesigning the rest of the pipeline. (Captured as future work in `05-Performance-And-Limitations.md`.)

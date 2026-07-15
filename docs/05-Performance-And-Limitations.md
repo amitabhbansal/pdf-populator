@@ -47,7 +47,7 @@ Repeatability was tested by rendering the same input 10 times and hashing the re
 
 ## 6. Future Improvements
 
-- **OCR-assisted anchoring** — detect a few label positions at runtime to auto-correct scan shift/skew, keeping config-driven placement (the hybrid approach from `02-Solution-Design.md`).
+- **OCR-assisted anchoring** — detect a few label positions at runtime to auto-correct scan shift/skew, keeping config-driven placement (the OCR upgrade path from `02-Solution-Design.md`).
 - **Automatic template detection** — identify which form a PDF is and select its mapping automatically.
 - **Batch processing** — fill many data records against one template in a single run.
 - **Overflow handling** — warn on, shrink, or wrap values that exceed their field width.

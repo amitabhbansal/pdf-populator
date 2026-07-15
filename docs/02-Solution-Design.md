@@ -1,6 +1,6 @@
 # 02 - Solution Design
 
-> The approaches I evaluated for placing values onto a scanned form, how they compare, and why I selected **Coordinate Mapping** for this assignment. OCR and Hybrid are documented here as alternatives considered, not as the chosen path.
+> The approaches I evaluated for placing values onto a scanned form, how they compare, and why I selected **Coordinate Mapping** for this assignment. OCR is documented here as the alternative considered, not as the chosen path.
 
 ## 1. Design Goals
 
@@ -39,31 +39,19 @@ The solution should be:
 - **Maintainability:** Medium — more moving parts (preprocessing, OCR, label matching).
 - **Automation suitability:** Good, but harder to guarantee identical output across runs.
 
-### Approach 3 — Hybrid (OCR-Anchored Template)
-
-**How it works:** Use OCR only to find a few reliable anchor labels and align/calibrate the page, then place every field from a coordinate config defined **relative to those anchors**, falling back to fixed coordinates if an anchor isn't found.
-
-- **Advantages:** Robust to scan shift/skew while keeping placement config-driven and largely deterministic; degrades gracefully.
-- **Disadvantages:** Most moving parts of the three; still depends on OCR finding anchors; requires both a config and anchor logic.
-- **Complexity:** Medium–High.
-- **Accuracy:** High.
-- **Performance:** Medium (a limited OCR pass plus config placement).
-- **Maintainability:** Medium.
-- **Automation suitability:** Good.
-
 ## 3. Comparison
 
-| Criterion | Coordinate Mapping | OCR-Based | Hybrid |
-|---|---|---|---|
-| Determinism / repeatability | High | Medium | High |
-| Placement accuracy | High | Medium | High |
-| Robustness to scan variation | Low | High | High |
-| Implementation complexity | Low | High | Medium–High |
-| Performance | High | Low | Medium |
-| Maintainability | High | Medium | Medium |
-| Computational cost | Very low | High | Medium |
-| Automation suitability | Excellent | Good | Good |
-| No-LLM constraint | Satisfied | Satisfied | Satisfied |
+| Criterion | Coordinate Mapping | OCR-Based |
+|---|---|---|
+| Determinism / repeatability | High | Medium |
+| Placement accuracy | High | Medium |
+| Robustness to scan variation | Low | High |
+| Implementation complexity | Low | High |
+| Performance | High | Low |
+| Maintainability | High | Medium |
+| Computational cost | Very low | High |
+| Automation suitability | Excellent | Good |
+| No-LLM constraint | Satisfied | Satisfied |
 
 ## 4. Selected Approach — Coordinate Mapping
 
@@ -105,4 +93,4 @@ This keeps configuration as *data*, cleanly separated from business logic.
 - **Sensitivity to scan consistency:** If a scan of a known form is significantly shifted, scaled, or skewed relative to the reference, fixed coordinates can drift. (For provided fixed-template samples this is a non-issue; for messy real-world scans it would matter.)
 - **No layout adaptation:** The approach does not self-adjust to unseen or changed layouts.
 
-These limitations are acceptable given the fixed-template nature of the inputs. Where they would matter (variable or low-quality scans), the **OCR** and **Hybrid** approaches above become the natural upgrade path — captured as future work in `05-Performance-And-Limitations.md`.
+These limitations are acceptable given the fixed-template nature of the inputs. Where they would matter (variable or low-quality scans), the **OCR** approach above becomes the natural upgrade path — captured as future work in `05-Performance-And-Limitations.md`.

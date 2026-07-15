@@ -25,7 +25,7 @@ DATA_FILE = "input/sample_data.json"
 
 # Resolution used to render pages for calibration. A single value shared by both
 # the image renderer and the calibrator, so their coordinates always line up.
-DPI = 72
+DPI = 120
 
 # The stored coordinate is the text baseline; this fraction of the font size lowers
 # it so the clicked point roughly centres the text vertically. Increase to move text

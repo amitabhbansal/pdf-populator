@@ -12,7 +12,7 @@
 
 - **Decision:** Do not use OCR for positioning in this solution.
 - **Why:** OCR's value is adapting to variable or unknown layouts. Our layouts are fixed and known, so OCR adds cost (compute, preprocessing) and risk (misreads, run-to-run variability) without adding value. It also works against the repeatability goal.
-- **Rejected alternative:** OCR-based or hybrid positioning — kept as future work for variable/low-quality scans, not for fixed templates.
+- **Rejected alternative:** OCR-based positioning — kept as future work for variable/low-quality scans, not for fixed templates.
 
 ## Decision 3 — Why JSON?
 
