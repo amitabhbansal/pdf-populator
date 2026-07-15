@@ -9,11 +9,26 @@ are in `docs/`.)
 
 ## Setup
 
+**Prerequisites:** Python 3.10+ and a desktop environment (the calibrator opens a GUI
+window). No GPU or internet needed.
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+### Quick check
+
+The repo ships with a sample form that is already calibrated, so you can confirm the
+setup works right away — just run the renderer:
+
+```bash
+python src/pdf_renderer.py
+```
+
+This writes `output/filled_<template>.pdf`. Open it to see the sample data placed on
+the form. (Run all commands from the project root.)
 
 ## Configuration
 
@@ -27,23 +42,45 @@ there is no separate field list to maintain:
 ```json
 {
     "customer_name": "Amitabh Bansal",
-    "address": "42, MG Road, Sector 5"
+    "address": "42, MG Road, Sector 5",
+    "savings_account": true
 }
 ```
+
+A **`true`/`false`** value is treated as a **checkbox** (a tick is drawn when `true`,
+nothing when `false`). Any other value is drawn as text.
 
 ## Usage
 
 Run from the project root, in order:
 
+### 1. Render the PDF pages to images
 ```bash
-python src/pdf_to_images.py          # 1. PDF pages -> images
-python src/coordinate_calibrator.py  # 2. click to place each field, press S to save
-python src/pdf_renderer.py           # 3. write output/filled_<template>.pdf
+python src/pdf_to_images.py
 ```
 
-Calibrator keys: **click** = place the current field on the visible page ·
-**N/P** = next/previous field · **[ / ]** = previous/next page ·
-**R** = reset · **S** = save & exit · **Esc** = quit.
+### 2. Calibrate field positions (one-time per form)
+```bash
+python src/coordinate_calibrator.py
+```
+A window shows each page (needs a desktop display). **Click the window once so it has
+keyboard focus**, select a field, then click where it should go. Controls:
+
+| Key | Action |
+|---|---|
+| **click** | Place the current field on the visible page (click again to move it) |
+| **N** / **P** | Next / previous field |
+| **]** / **[** | Next / previous page |
+| **R** | Reset all placements |
+| **S** | Save the mapping and exit |
+| **Esc** | Quit without saving |
+
+For a checkbox field, click the **centre** of the box.
+
+### 3. Fill the form
+```bash
+python src/pdf_renderer.py           # writes output/filled_<template>.pdf
+```
 
 ## Adding a new form
 
@@ -62,7 +99,3 @@ pdf-populator/
 └── docs/      design & decisions
 ```
 
-## Limitations
-
-Assumes fixed-layout templates and consistent scans; heavily shifted or skewed scans
-can misplace text. OCR-based positioning is noted as future work (see `docs/`).

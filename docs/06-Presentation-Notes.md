@@ -12,20 +12,20 @@ The hard part in one line: **the computer has to write in the right spot on a pa
 | | **A — Coordinate Mapping** | **B — OCR-based** |
 |---|---|---|
 | Idea | Note each field's position once, save it, reuse it | Let the machine "read" the page, find labels, write next to them |
-| Position comes from | Saved numbers — exact | Guessed at run time — can vary |
+| Position comes from | Saved coordinates — exact | Detected from document content at run time — can vary |
 | Speed | Milliseconds | Seconds (OCR is heavy) |
 | When it goes wrong | Same error every time (fix once) | Random misreads on poor scans |
 | Best when | The form layout never changes | Layouts change from doc to doc |
 
 Both are valid — for **different situations**. So the real question is: *which situation am I in?*
 
-## 3. My Assumption — and Why
+## 3. Scope Assumption
 
-**I assumed the forms are fixed templates** — a bank's form always looks the same. Only the *customer data* changes; the *form* doesn't.
+Based on the supplied samples and the requirement for accuracy and repeatability, I treated each form as a **fixed template** — a bank's form always looks the same. Only the *customer data* changes; the *form* doesn't.
 
-Why this assumption is reasonable:
+Why this is a sound scoping decision:
 
-- **The requirements point to it.** They stress *"accuracy and repeatability."* That means the position must be exact and never change between runs — which is exactly what saved coordinates give, and exactly what run-time guessing (OCR) does not. Saved coordinates only work if the form is fixed — so I checked that this holds.
+- **The requirements point to it.** They stress *"accuracy and repeatability."* That means the position must be exact and never change between runs — which is exactly what saved coordinates give, and exactly what run-time detection (OCR) does not. Saved coordinates only work if the form is fixed — so I confirmed that this holds.
 - **The given forms fit it.** They are standard printed bank forms — the same layout across thousands of copies.
 
 I say this out loud because the whole design rests on it. If it were false, the right answer would change (see §8).
@@ -40,7 +40,7 @@ An agent opens bank accounts all day — Axis today, Federal tomorrow. The **for
 
 - **Valid for fixed forms** — positions never change, so measuring once is enough.
 - **Accurate** — text lands exactly on the saved spot. Nothing "reads" the page, so nothing can misread.
-- **Repeatable** — same input → same output, every time. I checked: output is **pixel-identical across runs**.
+- **Repeatable** — deterministic: identical inputs always produce identical output.
 - **Fast and cheap** — measured **~138 ms per form**, ~54 MB memory, no GPU, no internet.
 - **Easy to maintain** — a new bank = a new config file, not new code.
 
@@ -59,7 +59,7 @@ So for fixed forms, OCR brings all the cost and none of the benefit — and it w
 The tool is **two systems joined by one file.** One is a **one-time setup** (a human clicks the field spots). The other is the **automatic engine** (runs for every customer, no human).
 
 ```
-   SYSTEM 1 — CALIBRATION  (setup, once per form, done by a developer)
+   SYSTEM 1 — CALIBRATION  (setup, once per form)
    ─────────────────────────────────────────────────────────────────
         scanned PDF ─▶ pdf_to_images ─▶ page images ─▶ [person clicks] ─▶ mapping file
                                                                             │
@@ -92,6 +92,8 @@ The tool is **two systems joined by one file.** One is a **one-time setup** (a h
 └──────────────────────────────────────────────────────────┘
 ```
 
+> **The renderer is completely stateless. It does not know anything about bank forms or field names — it simply combines a PDF, a mapping, and customer data. All template-specific knowledge lives in configuration, not in code.**
+
 **The bridge — `config/mappings/<template>.json`:** calibration **writes** it, the renderer **reads** it. The two systems never talk directly; they only share this file. That's why the engine has no form-specific logic inside it — all form knowledge lives in the config.
 
 **All the pieces at a glance:**
@@ -108,8 +110,8 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 ## 8. Why These Technologies
 
-- **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation, so language speed is a non-issue.
-- **PyMuPDF** — one library covers everything I need: open the scanned PDF, read page sizes, render pages to images (for calibration), and draw text/lines at exact coordinates, then save. Fast, with a simple API. *(It's AGPL-licensed — fine for this; a commercial product would need a commercial licence or an alternative.)*
+- **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation.
+- **PyMuPDF** — I needed one library that could both render pages for calibration and write vector text back onto PDFs, so I chose PyMuPDF.
 - **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks. Battle-tested and trivial for this.
 - **JSON** (config + data) — human-readable, language-independent, and diff-friendly; config is data, not code.
 
@@ -138,7 +140,9 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 ## 11. What Can Be Improved (Roadmap)
 
 - **OCR-assisted anchoring** — OCR finds a few labels at run time, works out the scan's shift, and the saved positions self-correct. Handles messy scans while staying config-driven.
+- **Modularise the code + add tests** — split each script into smaller, single-purpose modules (e.g. a `geometry` module for the coordinate conversions, an `io` module for loading config/data, a `draw` module for the overlay) and add unit tests for the pure functions (point↔pixel round-trip, hex→RGB, validation) plus an output comparison test. Makes the code easier to extend and safer to change.
 - **Better calibration tool** — zoom, drag-to-adjust, undo.
+- **Scalable calibration GUI** — with many fields the current window gets cluttered (dots and labels overlap). Improve it with a **side panel listing all fields** (click a field in the list to select it, tick shows which are placed), on-hover highlighting, and show/hide labels — so a form with 50+ fields stays readable.
 - **Live preview** — show the real value at the clicked spot while calibrating (what-you-see-is-what-you-get).
 - **Per-letter rendering** — for one-box-per-letter fields.
 - **Long-text handling** — measure width, then warn/shrink/wrap.
@@ -176,7 +180,7 @@ Worth mentioning: the output **file bytes** differ slightly between runs. I chec
 
 - **Fills scanned, field-less PDFs** — no editable fields, no text layer, and **no OCR, no LLM**.
 - **Accurate by construction** — values land on exact saved coordinates; there's no "reading" step that can misread.
-- **Repeatable** — same input → **pixel-identical output every run** (verified, not claimed).
+- **Repeatable** — deterministic output: identical inputs always produce identical output.
 - **Fast and light** — ~138 ms per form, ~54 MB memory, no GPU, no network.
 - **Config-driven** — a new bank = a new config file, **zero code changes**.
 - **Two clean systems** — one-time human calibration, then a fully automated fill engine.
