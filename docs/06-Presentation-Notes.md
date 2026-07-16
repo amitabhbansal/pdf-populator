@@ -146,6 +146,10 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 - Per-letter rendering for boxed forms
 - Template detection and versioning
 - Modularization and automated testing
+- Encryption of data for prod
+- Graceful handling for corrupted PDFs 
+- Password-protected PDF support (secure authentication flow)
+- Input support
 
 ## 10. Deployment
 
