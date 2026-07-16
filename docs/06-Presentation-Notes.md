@@ -127,6 +127,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 - **Python** — the strongest ecosystem for PDF and image work, quick to build, easy to read and hand over. The job is file I/O and simple coordinate maths, not heavy computation.
 - **PyMuPDF** — I needed one library that could both render pages for calibration and write vector text back onto PDFs, so I chose PyMuPDF.
+[limitation - PyMuPDF is licensed, so we may need to look at alternatives such as PDFium]
 - **OpenCV** — used only by the calibration tool, to show the page image and capture mouse clicks.
 - **JSON** (config + data) — human-readable, language-independent, and diff-friendly; config is data, not code.
 
@@ -139,6 +140,7 @@ This also answers *"isn't manual clicking against 'automatable'?"* → **System 
 
 - Better calibration experience (zoom, drag, undo, field navigation)
 - Rich content support (signatures, photos, logos)
+- Rotated page support
 - Unicode and multilingual fonts
 - Long-text handling and alignment
 - Per-letter rendering for boxed forms
