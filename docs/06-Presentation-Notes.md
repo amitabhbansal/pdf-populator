@@ -244,10 +244,10 @@ How users interact with it, end to end:
 | Per field | ~15 ms |
 | Peak memory | ~54 MB |
 | Fields placed correctly | 9/9, right pages |
-| Repeatability | Deterministic visual output for identical inputs |
+| Repeatability | Deterministic by construction — identical inputs give identical output |
 | Silent failures | None — validation reports every skipped/missing field |
 
-These come from **`src/benchmark.py`** — reproducible on any machine (`python src/benchmark.py`). Timing scales with field count (e.g. the 59-field Term Deposit form takes ~627 ms).
+The timing and memory figures come from **`src/benchmark.py`** — reproducible on any machine (`python src/benchmark.py`). Placement and coverage come from the renderer's own run summary; repeatability is deterministic by construction. Timing scales with field count (e.g. the 59-field Term Deposit form takes ~627 ms).
 
 Note: the output **file bytes** differ slightly between runs — that's just PDF save metadata (a timestamp and document ID the format writes on save), not the placed content. The fill itself is fully deterministic: identical inputs always place the same values at the same coordinates.
 

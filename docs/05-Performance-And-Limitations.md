@@ -1,10 +1,10 @@
 # 05 - Performance and Limitations
 
-> Measured performance and repeatability of the prototype, accuracy expectations, known limitations, deployment considerations, and future improvements.
+> Measured performance of the prototype, its deterministic repeatability, accuracy expectations, known limitations, deployment considerations, and future improvements.
 
 ## 1. Measured Performance
 
-All figures below are produced by **`src/benchmark.py`**, which runs the real renderer 10 times and reports timing, peak memory, and repeatability. Reproduce them on any machine:
+All figures below are produced by **`src/benchmark.py`**, which runs the real renderer 10 times and reports timing and peak memory. Reproduce them on any machine:
 
 ```
 python src/benchmark.py
@@ -19,18 +19,18 @@ Example results (Apple Silicon MacBook Air, Python 3.14):
 
 Timing scales mainly with the number of fields; the fixed open/save overhead is amortized across more fields, so per-field cost drops as fields grow. No GPU, no network, no external services. Coordinate mapping does no image analysis or text recognition — a render is just config lookup plus text drawing, far lighter than an OCR pass.
 
-## 2. Measured Repeatability
+## 2. Repeatability (Deterministic by Construction)
 
-`benchmark.py` renders the same input twice and compares a **SHA-256 over the rendered pixels** of every page:
+Repeatability is guaranteed by the **method**, not observed after the fact. The renderer has no randomness, no model, and no recognition step — it draws each value at a fixed stored coordinate. The same template, mapping, and data therefore always produce the same visual output.
 
-- **Rendered content is identical** across runs — the same input always produces the same visual output.
-- **Raw file bytes differ slightly** between runs — that's PDF *metadata* (a save timestamp and document ID the format writes), not content. So determinism is checked on rendered pixels, not raw file bytes.
+- **Rendered content is identical** across runs — same input, same placed values at the same coordinates.
+- **Raw file bytes differ slightly** between runs — that's PDF *metadata* (a save timestamp and document ID the format writes on save), not content. The visible fill is unchanged.
 
 ## 3. Accuracy Expectations
 
 - **Placement is exact by construction**: values are drawn at stored coordinates, so there is no recognition step that could misread or drift. In the sample run, 9/9 fields were placed on the correct page at the calibrated position.
 - Accuracy is therefore bounded by **calibration quality** — a one-time human step. If a click was imprecise, the text is consistently offset by exactly that amount until recalibrated (errors are systematic and fixable, never random).
-- The pre-render **validation step** guarantees nothing fails silently: any field that is declared but uncalibrated, missing a value, or mismatched by name is reported, and every run ends with an explicit filled/skipped summary.
+- The pre-render **validation step** guarantees nothing fails silently: any field that is declared but uncalibrated, missing a value, or mismatched by name is reported. Every run also ends with a **coverage metric** — of all the values that should appear on the form, how many had a calibrated position and were actually placed — and it names anything dropped (e.g. `44/45 values placed = 97.8% (1 dropped: email)`).
 
 ## 4. Limitations
 

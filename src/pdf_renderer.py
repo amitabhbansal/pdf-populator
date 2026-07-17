@@ -72,6 +72,19 @@ def resolve_font(name):
     return FONT_MAP.get(name, DEFAULT_FONT)
 
 
+def has_content(value):
+    """Whether a data value produces a visible mark on the form.
+
+    - text fields: any non-empty string after stripping
+    - checkboxes:  True means a tick is drawn; False/empty is an intentional blank
+    """
+    if value is True:
+        return True
+    if value is False or value is None:
+        return False
+    return str(value).strip() != ""
+
+
 # -------------------------
 # Validation
 # -------------------------
@@ -180,6 +193,19 @@ def render(pdf_path, mapping, data, output_path):
                        filled, len(skipped), ", ".join(skipped))
     else:
         logger.info("Summary: all %d field(s) filled.", filled)
+
+    # Coverage metric: of every value meant to appear (non-empty / ticked), how many
+    # had a calibrated position to be drawn at. Anything without one was dropped and
+    # is the only way a value can be silently lost (already warned about above).
+    mapped = set(mapping.get("fields", {}))
+    content_keys = {name for name, value in data.items() if has_content(value)}
+    placed = content_keys & mapped
+    dropped = content_keys - mapped
+    placeable = len(placed) + len(dropped)
+    coverage = (len(placed) / placeable * 100) if placeable else 100.0
+    logger.info("Coverage: %d/%d values placed = %.1f%%%s",
+                len(placed), placeable, coverage,
+                "" if not dropped else f" ({len(dropped)} dropped: {', '.join(sorted(dropped))})")
     logger.info("Output written to %s", output_path)
     return filled
 

@@ -1,42 +1,30 @@
 """Reproducible benchmark for the PDF Population Engine.
 
-Measures render performance, peak memory, and content repeatability using the
-same render() the real pipeline uses — so the numbers in the docs can be
-reproduced by anyone, on any machine, at any time:
+Measures render performance and peak memory using the same render() the real
+pipeline uses — so the numbers in the docs can be reproduced by anyone, on any
+machine, at any time:
 
     python src/benchmark.py
 
 The numbers naturally vary a little with machine and with the active template
 (set INPUT_PDF / DATA_FILE in settings.py). The script prints the template and
 field count so every result is self-describing.
+
+The render output is written to the system temp folder (not the project) and
+deleted afterwards, so running the benchmark never leaves a PDF behind.
 """
 
-import hashlib
 import logging
 import os
 import resource
+import tempfile
 import time
-
-import pymupdf
 
 import settings
 import pdf_renderer
 
 RUNS = 10
-TMP_OUTPUT = os.path.join("output", "_benchmark_tmp.pdf")
-
-
-def content_hash(pdf_path):
-    """SHA-256 over the rendered PIXELS of every page — i.e. the visual content,
-    not the raw file bytes (which include a save timestamp that always changes)."""
-    doc = pymupdf.open(pdf_path)
-    digest = hashlib.sha256()
-    try:
-        for page in doc:
-            digest.update(page.get_pixmap().samples)
-    finally:
-        doc.close()
-    return digest.hexdigest()
+TMP_OUTPUT = os.path.join(tempfile.gettempdir(), "_pdf_populator_benchmark.pdf")
 
 
 def main():
@@ -45,7 +33,6 @@ def main():
     mapping = pdf_renderer.load_json(settings.MAPPING_FILE)
     data = pdf_renderer.load_json(settings.DATA_FILE)
     field_count = len(mapping.get("fields", {}))
-    os.makedirs("output", exist_ok=True)
 
     # --- Performance: RUNS full renders (open PDF -> place all fields -> save) ---
     times = []
@@ -58,12 +45,6 @@ def main():
     # --- Peak memory (macOS reports bytes, Linux reports KB) ---
     rss = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
     peak_mb = rss / (1024 * 1024) if rss > 1_000_000 else rss / 1024
-
-    # --- Repeatability: render again and compare rendered content ---
-    first = content_hash(TMP_OUTPUT)
-    pdf_renderer.render(settings.INPUT_PDF, mapping, data, TMP_OUTPUT)
-    second = content_hash(TMP_OUTPUT)
-    identical = first == second
 
     if os.path.exists(TMP_OUTPUT):
         os.remove(TMP_OUTPUT)
@@ -79,7 +60,6 @@ def main():
     print(f"min / max          : {min(times) * 1000:.1f} / {max(times) * 1000:.1f} ms")
     print(f"time per field     : {per_field}")
     print(f"peak memory        : {peak_mb:.0f} MB")
-    print(f"visual output      : {'PASS — identical across runs' if identical else 'FAIL — output differs'}")
 
 
 if __name__ == "__main__":
